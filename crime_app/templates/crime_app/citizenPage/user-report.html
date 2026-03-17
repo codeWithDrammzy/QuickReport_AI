@@ -1,0 +1,883 @@
+{% extends "crime_app/citizenPage/maain.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<!-- Main Content -->
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Report a Crime</h1>
+            <p class="text-gray-600 mt-2">Help keep your community safe by reporting criminal activities</p>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between max-w-2xl mx-auto">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">1</div>
+                    <span class="ml-2 text-sm font-medium text-blue-600">Crime Details</span>
+                </div>
+                <div class="flex-1 h-1 bg-blue-200 mx-4"></div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-semibold">2</div>
+                    <span class="ml-2 text-sm font-medium text-gray-500">Evidence</span>
+                </div>
+                <div class="flex-1 h-1 bg-gray-200 mx-4"></div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-semibold">3</div>
+                    <span class="ml-2 text-sm font-medium text-gray-500">Review & Submit</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700{% else %}bg-green-50 border border-green-200 text-green-700{% endif %} rounded-lg p-4">
+                <div class="flex items-center">
+                    <i class="{% if message.tags == 'error' %}fas fa-exclamation-circle{% else %}fas fa-check-circle{% endif %} mr-2"></i>
+                    {{ message }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6" id="crimeReportForm">
+            {% csrf_token %}
+            
+            <!-- Crime Information Card -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">📋 Crime Information</h2>
+                
+                <!-- Two-column layout for form fields -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Left Column -->
+    <div class="space-y-6">
+        <!-- Title -->
+        <div>
+            <label for="id_title" class="block text-sm font-medium text-gray-700 mb-2">
+                Report Title *
+            </label>
+            <input type="text" 
+                   name="title" 
+                   id="id_title" 
+                   class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                   placeholder="Enter report title"
+                   value="{{ form.title.value|default:'' }}"
+                   required>
+        </div>
+
+        <!-- Incident Type - FIXED: No blank option -->
+        <div>
+            <label for="id_incident_type" class="block text-sm font-medium text-gray-700 mb-2">
+                Incident Type *
+            </label>
+            <select name="incident_type" 
+                    id="id_incident_type" 
+                    class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required>
+                {% for value, label in form.fields.incident_type.choices %}
+                    <option value="{{ value }}" {% if form.incident_type.value == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Priority - FIXED: No blank option -->
+        <div>
+            <label for="id_priority" class="block text-sm font-medium text-gray-700 mb-2">
+                Priority Level *
+            </label>
+            <select name="priority" 
+                    id="id_priority" 
+                    class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required>
+                {% for value, label in form.fields.priority.choices %}
+                    <option value="{{ value }}" {% if form.priority.value == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="space-y-6">
+        <!-- Department - FIXED: No blank option -->
+        <div>
+            <label for="id_department" class="block text-sm font-medium text-gray-700 mb-2">
+                Report to Department *
+            </label>
+            <select name="department" 
+                    id="id_department" 
+                    class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required>
+                {% for value, label in form.fields.department.choices %}
+                    <option value="{{ value }}" {% if form.department.value == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Location with GPS -->
+        <div>
+            <label for="locationInput" class="block text-sm font-medium text-gray-700 mb-2">
+                Location *
+            </label>
+            <div class="flex space-x-3">
+                <input type="text" 
+                       name="location" 
+                       id="locationInput" 
+                       class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Enter location or use GPS button below"
+                       value="{{ form.location.value|default:'' }}"
+                       required>
+                <button type="button" id="getLocationBtn" 
+                    class="whitespace-nowrap bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center">
+                    <i class="fas fa-map-marker-alt mr-2"></i>GPS
+                </button>
+            </div>
+            <!-- GPS Coordinates Display -->
+            <div id="gpsCoordinates" class="hidden mt-2 p-2 bg-green-50 rounded-lg">
+                <p class="text-green-700 text-sm">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Location captured: <span id="coordinatesText"></span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Hidden GPS Fields -->
+        <input type="hidden" name="latitude" id="latitudeField" value="{{ form.latitude.value|default:'' }}">
+        <input type="hidden" name="longitude" id="longitudeField" value="{{ form.longitude.value|default:'' }}">
+    </div>
+</div>
+
+                <!-- Description (Full Width) -->
+                <div class="mt-6">
+                    <label for="id_description" class="block text-sm font-medium text-gray-700 mb-2">
+                        Incident Description *
+                    </label>
+                    <textarea name="description" 
+                              id="id_description" 
+                              rows="4"
+                              class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Describe the incident in detail..."
+                              required>{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- ===== NEW AI SUGGESTION BOX ===== -->
+                <div id="aiSuggestionBox" class="hidden mt-6 p-5 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 border-2 border-purple-200 rounded-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="bg-purple-600 p-2 rounded-lg mr-3">
+                                <i class="fas fa-robot text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800">AI-Powered Suggestions</h3>
+                        </div>
+                        <span class="bg-green-100 text-green-700 text-xs px-3 py-1.5 rounded-full font-semibold border border-green-200">
+                            <i class="fas fa-bolt mr-1 text-xs"></i>Real-time
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <!-- Priority Suggestion -->
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-purple-100">
+                            <div class="flex items-start justify-between mb-2">
+                                <p class="text-xs text-gray-500 uppercase tracking-wider">Priority Analysis</p>
+                                <div class="bg-purple-100 px-2 py-0.5 rounded-full">
+                                    <span id="aiPriorityConf" class="text-xs font-bold text-purple-700">-</span>
+                                </div>
+                            </div>
+                            <div class="flex items-baseline">
+                                <span id="aiPriority" class="text-2xl font-bold text-gray-800">-</span>
+                                <span class="ml-2 text-xs text-gray-500">suggested</span>
+                            </div>
+                            <div class="mt-2 text-xs text-gray-500">
+                                <i class="fas fa-tag mr-1 text-purple-400"></i>
+                                <span id="aiPriorityKeywords"></span>
+                            </div>
+                            <button type="button" id="applyPriorityBtn"
+                                    class="hidden mt-3 w-full bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-medium px-3 py-2 rounded-lg transition">
+                                <i class="fas fa-check mr-1"></i> Apply Suggested Priority
+                            </button>
+                        </div>
+                        
+                        <!-- Incident Suggestion -->
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-indigo-100">
+                            <div class="flex items-start justify-between mb-2">
+                                <p class="text-xs text-gray-500 uppercase tracking-wider">Incident Classification</p>
+                                <div class="bg-indigo-100 px-2 py-0.5 rounded-full">
+                                    <span id="aiIncidentConf" class="text-xs font-bold text-indigo-700">-</span>
+                                </div>
+                            </div>
+                            <div class="flex items-baseline">
+                                <span id="aiIncident" class="text-2xl font-bold text-gray-800">-</span>
+                                <span class="ml-2 text-xs text-gray-500">suggested</span>
+                            </div>
+                            <div class="mt-2 text-xs text-gray-500">
+                                <i class="fas fa-search mr-1 text-indigo-400"></i>
+                                <span id="aiIncidentKeywords"></span>
+                            </div>
+                            <button type="button" id="applyIncidentBtn"
+                                    class="hidden mt-3 w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-xs font-medium px-3 py-2 rounded-lg transition">
+                                <i class="fas fa-check mr-1"></i> Apply Suggested Incident
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Message -->
+                    <div id="aiMessage" class="text-xs text-gray-500 flex items-center bg-white/80 p-3 rounded-lg">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                        Type at least 10 characters to see AI analysis...
+                    </div>
+                </div>
+                <!-- ===== END AI SUGGESTION BOX ===== -->
+            </div>
+
+            <!-- Evidence Collection Card -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">📷 Evidence Collection</h2>
+                <p class="text-gray-600 mb-6">Add photos, videos, or audio recordings as evidence (optional but recommended)</p>
+
+                <!-- Three columns for media types -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Photo Capture -->
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center h-full">
+                        <h4 class="font-semibold text-gray-700 mb-3">📸 Photo Evidence</h4>
+                        <video id="cameraPreview" class="mx-auto rounded-md hidden w-full max-w-xs" autoplay></video>
+                        <canvas id="photoCanvas" class="hidden"></canvas>
+                        <div id="photoPreviewContainer" class="my-3"></div>
+
+                        <div class="space-y-2">
+                            <button type="button" id="openCameraBtn"
+                                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow text-sm w-full">
+                                Open Camera
+                            </button>
+                            <button type="button" id="takePhotoBtn"
+                                class="hidden bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-sm w-full">
+                                Take Photo
+                            </button>
+                            <div class="text-center text-xs text-gray-500 mt-2">or</div>
+                            <label for="photoFileInput" class="block bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow text-sm w-full cursor-pointer text-center">
+                                Upload Photo
+                            </label>
+                        </div>
+
+                        <!-- Hidden file inputs for photo -->
+                        <input type="file" name="photo_file" id="photoFileInput" accept="image/*" class="hidden">
+                        <input type="file" name="evidence_image" id="evidenceImageInput" accept="image/*" class="hidden">
+                    </div>
+
+                    <!-- Video Recording -->
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center h-full">
+                        <h4 class="font-semibold text-gray-700 mb-3">🎥 Video Evidence</h4>
+                        <video id="videoPreview" class="mx-auto rounded-md hidden w-full max-w-xs" controls></video>
+                        
+                        <div class="space-y-2">
+                            <button type="button" id="startVideoBtn"
+                                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow text-sm w-full">
+                                Start Recording
+                            </button>
+                            <button type="button" id="stopVideoBtn"
+                                class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow text-sm w-full">
+                                Stop Recording
+                            </button>
+                            <div class="text-center text-xs text-gray-500 mt-2">or</div>
+                            <label for="videoFileInput" class="block bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow text-sm w-full cursor-pointer text-center">
+                                Upload Video
+                            </label>
+                        </div>
+
+                        <!-- Hidden file inputs for video -->
+                        <input type="file" name="video_file" id="videoFileInput" accept="video/*" class="hidden">
+                        <input type="file" name="evidence_video" id="evidenceVideoInput" accept="video/*" class="hidden">
+                    </div>
+
+                    <!-- Audio Recording -->
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center h-full">
+                        <h4 class="font-semibold text-gray-700 mb-3">🎤 Audio Evidence</h4>
+                        <audio id="audioPreview" class="mx-auto hidden w-full" controls></audio>
+                        
+                        <div class="space-y-2">
+                            <button type="button" id="startAudioBtn"
+                                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow text-sm w-full">
+                                Record Voice
+                            </button>
+                            <button type="button" id="stopAudioBtn"
+                                class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow text-sm w-full">
+                                Stop
+                            </button>
+                            <div class="text-center text-xs text-gray-500 mt-2">or</div>
+                            <label for="audioFileInput" class="block bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow text-sm w-full cursor-pointer text-center">
+                                Upload Audio
+                            </label>
+                        </div>
+
+                        <!-- Hidden file inputs for audio -->
+                        <input type="file" name="audio_file" id="audioFileInput" accept="audio/*" class="hidden">
+                        <input type="file" name="evidence_audio" id="evidenceAudioInput" accept="audio/*" class="hidden">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Section -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Ready to Submit</h3>
+                        <p class="text-gray-600 text-sm">Review your information before submitting</p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="{% url 'user-board' %}" 
+                           class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                            class="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition flex items-center">
+                            <i class="fas fa-paper-plane mr-2"></i>Submit Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Help Text -->
+        <div class="mt-6 text-center">
+            <p class="text-gray-500 text-sm">
+                <i class="fas fa-shield-alt mr-1"></i>
+                Your report will be securely submitted and handled by the appropriate authorities.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- GPS Location Modal -->
+<div id="gpsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">📍 Get Your Location</h3>
+        <p class="text-gray-600 mb-6">We need your location to accurately report the crime incident.</p>
+        
+        <div class="space-y-4">
+            <div id="locationStatus" class="bg-blue-50 p-4 rounded-lg">
+                <p class="text-blue-700 text-sm">Click the button below to get your current location.</p>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button id="getLocationModalBtn" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                    <i class="fas fa-map-marker-alt mr-2"></i>Get Location
+                </button>
+                <button id="cancelLocationBtn" class="px-6 bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-400 transition">
+                    Cancel
+                </button>
+            </div>
+            
+            <div id="locationResult" class="hidden">
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-green-700 text-sm font-semibold">Location captured successfully!</p>
+                    <p id="coordinates" class="text-green-600 text-xs mt-1"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ======== GPS LOCATION =========
+        const gpsModal = document.getElementById('gpsModal');
+        const getLocationBtn = document.getElementById('getLocationBtn');
+        const getLocationModalBtn = document.getElementById('getLocationModalBtn');
+        const cancelLocationBtn = document.getElementById('cancelLocationBtn');
+        const locationStatus = document.getElementById('locationStatus');
+        const locationResult = document.getElementById('locationResult');
+        const coordinates = document.getElementById('coordinates');
+        const coordinatesText = document.getElementById('coordinatesText');
+        const gpsCoordinates = document.getElementById('gpsCoordinates');
+        const locationInput = document.getElementById('locationInput');
+        const latitudeField = document.getElementById('latitudeField');
+        const longitudeField = document.getElementById('longitudeField');
+
+        // Show GPS modal when GPS button is clicked
+        getLocationBtn.addEventListener('click', function() {
+            gpsModal.classList.remove('hidden');
+        });
+
+        // Hide GPS modal
+        cancelLocationBtn.addEventListener('click', function() {
+            gpsModal.classList.add('hidden');
+        });
+
+        // Get location from modal
+        getLocationModalBtn.addEventListener('click', getLocation);
+
+        function getLocation() {
+            locationStatus.innerHTML = '<p class="text-blue-700 text-sm">🔄 Getting your location...</p>';
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        // Display coordinates
+                        coordinates.textContent = `Latitude: ${lat.toFixed(6)}, Longitude: ${lng.toFixed(6)}`;
+                        coordinatesText.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        
+                        // Set form values
+                        latitudeField.value = lat;
+                        longitudeField.value = lng;
+                        
+                        // Reverse geocode to get address (simplified - in production use a geocoding service)
+                        locationInput.value = `GPS Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        
+                        // Show success
+                        locationResult.classList.remove('hidden');
+                        gpsCoordinates.classList.remove('hidden');
+                        locationStatus.innerHTML = '<p class="text-green-700 text-sm">✅ Location captured successfully!</p>';
+                        
+                        // Auto-close modal after 2 seconds
+                        setTimeout(() => {
+                            gpsModal.classList.add('hidden');
+                        }, 2000);
+                    },
+                    function(error) {
+                        let errorMessage = 'Unable to get your location. ';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage += 'Please allow location access in your browser settings.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage += 'Location information is unavailable.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage += 'Location request timed out.';
+                                break;
+                            default:
+                                errorMessage += 'An unknown error occurred.';
+                                break;
+                        }
+                        locationStatus.innerHTML = `<p class="text-red-700 text-sm">❌ ${errorMessage}</p>`;
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            } else {
+                locationStatus.innerHTML = '<p class="text-red-700 text-sm">❌ Geolocation is not supported by this browser.</p>';
+            }
+        }
+
+        // Close modal when clicking outside
+        gpsModal.addEventListener('click', function(e) {
+            if (e.target === gpsModal) {
+                gpsModal.classList.add('hidden');
+            }
+        });
+
+        // ======== AI REAL-TIME ANALYSIS =========
+        const descriptionInput = document.getElementById('id_description');
+        const titleInput = document.getElementById('id_title');
+        const aiBox = document.getElementById('aiSuggestionBox');
+        
+        // AI display elements
+        const aiPriority = document.getElementById('aiPriority');
+        const aiPriorityConf = document.getElementById('aiPriorityConf');
+        const aiPriorityKeywords = document.getElementById('aiPriorityKeywords');
+        const aiIncident = document.getElementById('aiIncident');
+        const aiIncidentConf = document.getElementById('aiIncidentConf');
+        const aiIncidentKeywords = document.getElementById('aiIncidentKeywords');
+        const aiMessage = document.getElementById('aiMessage');
+        
+        // Apply buttons
+        const applyPriorityBtn = document.getElementById('applyPriorityBtn');
+        const applyIncidentBtn = document.getElementById('applyIncidentBtn');
+        
+        // Priority and incident dropdowns
+        const prioritySelect = document.getElementById('id_priority');
+        const incidentSelect = document.getElementById('id_incident_type');
+        
+        let debounceTimer;
+        let lastAnalysis = null;
+        
+        function debounce(func, delay) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(func, delay);
+        }
+        
+        function analyzeText() {
+            const title = titleInput ? titleInput.value : '';
+            const description = descriptionInput.value;
+            
+            if (description.length >= 10) {
+                // Show loading state
+                aiBox.classList.remove('hidden');
+                aiPriority.textContent = '...';
+                aiPriorityConf.textContent = '-';
+                aiIncident.textContent = '...';
+                aiIncidentConf.textContent = '-';
+                aiMessage.innerHTML = '<i class="fas fa-spinner fa-spin text-purple-600 mr-2"></i>AI analyzing your description...';
+                
+                // Call backend API
+                fetch('{% url "ai-analyze-realtime" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        description: description
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        lastAnalysis = data;
+                        
+                        // Update Priority
+                        const priority = data.priority.suggested_priority;
+                        aiPriority.textContent = priority;
+                        aiPriorityConf.textContent = `${data.priority.confidence}%`;
+                        
+                        // Color code priority
+                        if (priority === 'Emergency') {
+                            aiPriority.className = 'text-2xl font-bold text-red-600';
+                        } else if (priority === 'High') {
+                            aiPriority.className = 'text-2xl font-bold text-orange-600';
+                        } else if (priority === 'Medium') {
+                            aiPriority.className = 'text-2xl font-bold text-yellow-600';
+                        } else {
+                            aiPriority.className = 'text-2xl font-bold text-green-600';
+                        }
+                        
+                        // Update Priority Keywords
+                        const priorityKeywords = data.priority.matched_keywords;
+                        aiPriorityKeywords.textContent = priorityKeywords.length > 0 
+                            ? priorityKeywords.slice(0, 3).join(', ')
+                            : 'No keywords detected';
+                        
+                        // Update Incident
+                        const incident = data.incident.suggested_incident;
+                        aiIncident.textContent = incident;
+                        aiIncidentConf.textContent = `${data.incident.confidence}%`;
+                        
+                        // Update Incident Keywords
+                        const incidentKeywords = data.incident.matched_keywords;
+                        aiIncidentKeywords.textContent = incidentKeywords.length > 0
+                            ? incidentKeywords.slice(0, 3).join(', ')
+                            : 'No keywords detected';
+                        
+                        // Show apply buttons
+                        if (prioritySelect) applyPriorityBtn.classList.remove('hidden');
+                        if (incidentSelect) applyIncidentBtn.classList.remove('hidden');
+                        
+                        aiMessage.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-2"></i>AI analysis complete. Click buttons to apply suggestions.';
+                    } else {
+                        aiMessage.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>AI temporarily unavailable.';
+                    }
+                })
+                .catch(error => {
+                    console.error('AI Error:', error);
+                    aiMessage.innerHTML = '<i class="fas fa-exclamation-circle text-red-500 mr-2"></i>Error connecting to AI service.';
+                });
+            } else {
+                aiBox.classList.add('hidden');
+            }
+        }
+        
+        // Apply priority suggestion
+        applyPriorityBtn?.addEventListener('click', function() {
+            if (lastAnalysis && prioritySelect) {
+                const suggestedPriority = lastAnalysis.priority.suggested_priority;
+                // Find and select the matching option
+                for (let option of prioritySelect.options) {
+                    if (option.value === suggestedPriority) {
+                        option.selected = true;
+                        break;
+                    }
+                }
+                // Visual feedback
+                this.innerHTML = '<i class="fas fa-check mr-1"></i> Applied!';
+                this.classList.add('bg-green-200', 'text-green-800');
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-check mr-1"></i> Apply Suggested Priority';
+                    this.classList.remove('bg-green-200', 'text-green-800');
+                    this.classList.add('bg-purple-100', 'text-purple-700');
+                }, 2000);
+            }
+        });
+        
+        // Apply incident suggestion
+        applyIncidentBtn?.addEventListener('click', function() {
+            if (lastAnalysis && incidentSelect) {
+                const suggestedIncident = lastAnalysis.incident.suggested_incident;
+                // Find and select the matching option
+                for (let option of incidentSelect.options) {
+                    if (option.text === suggestedIncident || option.value === suggestedIncident) {
+                        option.selected = true;
+                        break;
+                    }
+                }
+                // Visual feedback
+                this.innerHTML = '<i class="fas fa-check mr-1"></i> Applied!';
+                this.classList.add('bg-green-200', 'text-green-800');
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-check mr-1"></i> Apply Suggested Incident';
+                    this.classList.remove('bg-green-200', 'text-green-800');
+                    this.classList.add('bg-indigo-100', 'text-indigo-700');
+                }, 2000);
+            }
+        });
+        
+        // Event listeners for AI analysis
+        if (descriptionInput) {
+            descriptionInput.addEventListener('input', function() {
+                debounce(analyzeText, 500);
+            });
+        }
+        
+        if (titleInput) {
+            titleInput.addEventListener('input', function() {
+                if (descriptionInput.value.length >= 10) {
+                    debounce(analyzeText, 500);
+                }
+            });
+        }
+
+        // ======== CAMERA (Photo Capture) =========
+        const openCameraBtn = document.getElementById('openCameraBtn');
+        const takePhotoBtn = document.getElementById('takePhotoBtn');
+        const cameraPreview = document.getElementById('cameraPreview');
+        const photoCanvas = document.getElementById('photoCanvas');
+        const photoFileInput = document.getElementById('photoFileInput');
+        const evidenceImageInput = document.getElementById('evidenceImageInput');
+        const photoPreviewContainer = document.getElementById('photoPreviewContainer');
+        let cameraStream;
+
+        openCameraBtn.onclick = async () => {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                cameraPreview.srcObject = cameraStream;
+                cameraPreview.classList.remove('hidden');
+                takePhotoBtn.classList.remove('hidden');
+                openCameraBtn.classList.add('hidden');
+            } catch (error) {
+                alert('Error accessing camera: ' + error.message);
+            }
+        };
+
+        takePhotoBtn.onclick = () => {
+            const context = photoCanvas.getContext('2d');
+            photoCanvas.width = cameraPreview.videoWidth;
+            photoCanvas.height = cameraPreview.videoHeight;
+            context.drawImage(cameraPreview, 0, 0);
+            photoCanvas.toBlob(blob => {
+                const file = new File([blob], 'crime_photo.jpg', { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                
+                // Set BOTH file inputs
+                photoFileInput.files = dataTransfer.files;
+                evidenceImageInput.files = dataTransfer.files;
+                console.log("Photo captured and set to both inputs");
+
+                // preview
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.classList.add('mx-auto', 'rounded-md', 'mt-3', 'max-h-32', 'border', 'border-gray-300');
+                photoPreviewContainer.innerHTML = '';
+                photoPreviewContainer.appendChild(img);
+
+                // Stop camera
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraPreview.classList.add('hidden');
+                takePhotoBtn.classList.add('hidden');
+                openCameraBtn.classList.remove('hidden');
+            }, 'image/jpeg');
+        };
+
+        // ======== VIDEO RECORDING =========
+        const startVideoBtn = document.getElementById('startVideoBtn');
+        const stopVideoBtn = document.getElementById('stopVideoBtn');
+        const videoPreview = document.getElementById('videoPreview');
+        const videoFileInput = document.getElementById('videoFileInput');
+        const evidenceVideoInput = document.getElementById('evidenceVideoInput');
+        let videoRecorder, videoChunks = [];
+
+        startVideoBtn.onclick = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                videoRecorder = new MediaRecorder(stream);
+                videoChunks = [];
+
+                videoRecorder.ondataavailable = e => videoChunks.push(e.data);
+                videoRecorder.onstop = () => {
+                    const blob = new Blob(videoChunks, { type: 'video/mp4' });
+                    const file = new File([blob], 'crime_video.mp4', { type: 'video/mp4' });
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    
+                    // Set BOTH file inputs
+                    videoFileInput.files = dt.files;
+                    evidenceVideoInput.files = dt.files;
+                    console.log("Video captured and set to both inputs");
+
+                    videoPreview.src = URL.createObjectURL(blob);
+                    videoPreview.classList.remove('hidden');
+                };
+
+                videoRecorder.start();
+                startVideoBtn.classList.add('hidden');
+                stopVideoBtn.classList.remove('hidden');
+            } catch (error) {
+                alert('Error accessing camera/microphone: ' + error.message);
+            }
+        };
+
+        stopVideoBtn.onclick = () => {
+            videoRecorder.stop();
+            videoRecorder.stream.getTracks().forEach(track => track.stop());
+            startVideoBtn.classList.remove('hidden');
+            stopVideoBtn.classList.add('hidden');
+        };
+
+        // ======== AUDIO RECORDING =========
+        const startAudioBtn = document.getElementById('startAudioBtn');
+        const stopAudioBtn = document.getElementById('stopAudioBtn');
+        const audioPreview = document.getElementById('audioPreview');
+        const audioFileInput = document.getElementById('audioFileInput');
+        const evidenceAudioInput = document.getElementById('evidenceAudioInput');
+        let audioRecorder, audioChunks = [];
+
+        startAudioBtn.onclick = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                audioRecorder.ondataavailable = e => audioChunks.push(e.data);
+                audioRecorder.onstop = () => {
+                    const blob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    const file = new File([blob], 'crime_audio.mp3', { type: 'audio/mp3' });
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    
+                    // Set BOTH file inputs
+                    audioFileInput.files = dt.files;
+                    evidenceAudioInput.files = dt.files;
+                    console.log("Audio captured and set to both inputs");
+
+                    audioPreview.src = URL.createObjectURL(blob);
+                    audioPreview.classList.remove('hidden');
+                };
+
+                audioRecorder.start();
+                startAudioBtn.classList.add('hidden');
+                stopAudioBtn.classList.remove('hidden');
+            } catch (error) {
+                alert('Error accessing microphone: ' + error.message);
+            }
+        };
+
+        stopAudioBtn.onclick = () => {
+            audioRecorder.stop();
+            audioRecorder.stream.getTracks().forEach(track => track.stop());
+            startAudioBtn.classList.remove('hidden');
+            stopAudioBtn.classList.add('hidden');
+        };
+
+        // File upload handlers for manual uploads
+        document.getElementById('photoFileInput').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(e.target.files[0]);
+                evidenceImageInput.files = dataTransfer.files;
+                
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(e.target.files[0]);
+                img.classList.add('mx-auto', 'rounded-md', 'mt-3', 'max-h-32', 'border', 'border-gray-300');
+                photoPreviewContainer.innerHTML = '';
+                photoPreviewContainer.appendChild(img);
+                console.log("Photo uploaded manually");
+            }
+        });
+
+        document.getElementById('videoFileInput').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(e.target.files[0]);
+                evidenceVideoInput.files = dataTransfer.files;
+                
+                videoPreview.src = URL.createObjectURL(e.target.files[0]);
+                videoPreview.classList.remove('hidden');
+                console.log("Video uploaded manually");
+            }
+        });
+
+        document.getElementById('audioFileInput').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(e.target.files[0]);
+                evidenceAudioInput.files = dataTransfer.files;
+                
+                audioPreview.src = URL.createObjectURL(e.target.files[0]);
+                audioPreview.classList.remove('hidden');
+                console.log("Audio uploaded manually");
+            }
+        });
+
+        // Form submission handler for debugging
+        document.getElementById('crimeReportForm').addEventListener('submit', function(e) {
+            console.log("Form submitted - checking data:");
+            console.log("Title:", document.getElementById('id_title').value);
+            console.log("Description:", document.getElementById('id_description').value);
+            console.log("Location:", document.getElementById('locationInput').value);
+            console.log("Incident Type:", document.getElementById('id_incident_type').value);
+            console.log("Department:", document.getElementById('id_department').value);
+            console.log("Priority:", document.getElementById('id_priority').value);
+            console.log("Latitude:", latitudeField.value);
+            console.log("Longitude:", longitudeField.value);
+        });
+    });
+</script>
+
+<style>
+    /* Custom styles for better form appearance */
+    .form-control:focus {
+        outline: none;
+        ring: 2px solid #3b82f6;
+        border-color: transparent;
+    }
+
+    /* Smooth transitions */
+    .transition {
+        transition: all 0.3s ease;
+    }
+
+    /* Hide file input labels */
+    input[type="file"] {
+        display: none;
+    }
+
+    /* Required field indicator */
+    .required::after {
+        content: " *";
+        color: #ef4444;
+    }
+</style>
+
+{% endblock content %}

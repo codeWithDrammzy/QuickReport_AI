@@ -1,0 +1,579 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Admin Dashboard | QuickReport Nigeria</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Dynamic padding based on header height */
+    body {
+      padding-top: 120px; /* Base for mobile */
+    }
+    
+    @media (min-width: 768px) {
+      body {
+        padding-top: 140px; /* Desktop */
+      }
+    }
+    
+    /* Hide scrollbar for mobile filters */
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    /* Ensure mobile nav starts below header */
+    .mobile-nav {
+      top: 120px; /* Match body padding-top */
+      height: calc(100% - 120px);
+    }
+
+    /* Notification dropdown animations */
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .fade-in {
+      animation: slideDown 0.3s ease-out;
+    }
+
+    /* ===== TOOLTIP STYLES - FIXED OVERLAY ISSUE ===== */
+    .tooltip {
+      position: relative;
+    }
+    
+    .tooltip:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .tooltip-text {
+      visibility: hidden;
+      opacity: 0;
+      width: max-content;
+      max-width: 200px;
+      background-color: #1f2937;
+      color: white;
+      text-align: center;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      position: fixed;  /* Changed from absolute to fixed */
+      z-index: 999999;  /* Extremely high z-index */
+      top: auto;        /* Let JavaScript position it */
+      left: auto;       /* Let JavaScript position it */
+      transform: translateY(0);
+      transition: all 0.2s ease;
+      font-size: 0.75rem;
+      font-weight: 500;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    
+    .tooltip-text::after {
+      content: "";
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: transparent transparent #1f2937 transparent;
+    }
+
+    /* Ensure header doesn't block tooltips */
+    header {
+      z-index: 50;
+    }
+    
+    /* Make sure the action bar doesn't clip tooltips */
+    .overflow-x-auto {
+      overflow-x: auto !important;
+      overflow-y: visible !important;  /* Allow tooltips to overflow vertically */
+    }
+    
+    /* Ensure the container doesn't clip */
+    .bg-white {
+      overflow: visible !important;
+    }
+    
+    /* Fix for the scrollable area */
+    .hide-scrollbar {
+      overflow-y: visible !important;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <!-- Fixed Top Navigation -->
+  <header class="bg-blue-900 text-white fixed top-0 left-0 right-0 z-50 shadow-lg">
+    <!-- Main Navbar -->
+    <div class="px-3 sm:px-6 py-2 sm:py-4">
+      <div class="flex items-center justify-between">
+        <!-- Logo & Mobile Menu Toggle -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Mobile Menu Button -->
+          <button id="mobileMenuBtn" class="md:hidden text-white p-2 hover:bg-blue-800 rounded-lg transition">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+          
+          <div class="bg-yellow-400 p-1.5 sm:p-2 rounded-full">
+            <i class="fas fa-shield-alt text-blue-900 text-lg sm:text-xl"></i>
+          </div>
+          <div>
+            <h1 class="text-base sm:text-2xl font-bold text-yellow-400">
+              <a href="{% url 'dashboard' %}">QuickReport</a>
+            </h1>
+            <p class="text-[10px] sm:text-xs text-gray-300 hidden xs:block">Admin</p>
+          </div>
+        </div>
+
+        <!-- Search Form - Hidden on mobile, shown on desktop -->
+        <form method="GET" action="{% url 'search-crime' %}" class="hidden md:block relative w-full max-w-md mx-4">
+          <input 
+            type="text" 
+            name="q" 
+            placeholder="Search crime reports..." 
+            value="{{ request.GET.q }}" 
+            class="bg-blue-800 text-sm px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-300 text-gray-100 w-full pr-10"
+          >
+          <button type="submit" class="absolute right-0 top-0 mt-2 mr-3 text-gray-400">
+            <i class="fas fa-search"></i>
+          </button>
+        </form>
+
+        <!-- Profile & Notifications -->
+        <div class="flex items-center gap-2 sm:gap-4">
+          <!-- Search Icon for Mobile -->
+          <button id="mobileSearchBtn" class="md:hidden text-white p-2 hover:bg-blue-800 rounded-lg">
+            <i class="fas fa-search text-lg"></i>
+          </button>
+          
+          <!-- Notifications -->
+          <div class="relative">
+            <button id="notifyBtn" class="bg-yellow-400 text-blue-900 p-2 sm:px-3 sm:py-2 rounded-md hover:bg-yellow-300 transition relative">
+              <i class="fas fa-bell text-sm sm:text-base"></i>
+              {% if unread_count > 0 %}
+              <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-[10px] sm:text-xs animate-pulse">
+                {{ unread_count }}
+              </span>
+              {% endif %}
+            </button>
+
+            <!-- Notifications Dropdown -->
+            <div id="notifyMenu" class="hidden absolute right-0 mt-2 w-72 sm:w-80 bg-white text-gray-700 rounded-lg shadow-xl z-50 border border-gray-200 fade-in">
+              <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-semibold text-gray-800 flex items-center">
+                  <i class="fas fa-bell text-blue-600 mr-2"></i>
+                  Notifications
+                </h3>
+                {% if unread_count > 0 %}
+                <button id="markAllRead" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                  <i class="fas fa-check-double mr-1"></i>
+                  Mark all read
+                </button>
+                {% endif %}
+              </div>
+              
+              <div class="max-h-80 overflow-y-auto" id="notificationList">
+                {% if notifications %}
+                  {% for note in notifications %}
+                  <div class="px-4 py-3 hover:bg-gray-50 border-b last:border-0 {% if not note.is_read %}bg-blue-50 border-l-4 border-blue-500{% endif %}" data-notification-id="{{ note.id }}">
+                    <div class="flex items-start space-x-3">
+                      <div class="flex-shrink-0 mt-1">
+                        {% if not note.is_read %}
+                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        {% else %}
+                        <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+                        {% endif %}
+                      </div>
+                      <div class="flex-1">
+                        <p class="text-sm {% if not note.is_read %}font-semibold{% endif %}">{{ note.message|truncatechars:60 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">
+                          <i class="far fa-clock mr-1"></i>{{ note.created_at|timesince }} ago
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="text-center py-8">
+                    <i class="fas fa-bell-slash text-3xl text-gray-300 mb-3"></i>
+                    <p class="text-gray-500 text-sm">No notifications</p>
+                  </div>
+                {% endif %}
+              </div>
+              
+              <div class="p-3 border-t border-gray-100 bg-gray-50 rounded-b-lg">
+                <a href="#" class="text-blue-600 hover:text-blue-800 text-xs font-medium flex items-center justify-center">
+                  <span>View all notifications</span>
+                  <i class="fas fa-chevron-right ml-1"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Profile Dropdown -->
+          <div class="relative">
+            <button id="profileBtn" class="flex items-center gap-1 sm:gap-2 bg-blue-800 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-blue-700 transition">
+              <img src="{% static 'images/police.jpg' %}" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-yellow-400" alt="Admin" />
+              <span class="hidden sm:block text-sm">{{ user.first_name|default:'Admin' }}</span>
+              <i class="fas fa-chevron-down text-[10px] sm:text-xs"></i>
+            </button>
+            
+            <!-- Dropdown Menu -->
+            <div id="dropdownMenu" class="hidden absolute right-0 mt-2 w-40 sm:w-48 bg-white text-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 fade-in">
+              <a href="#" class="block px-3 sm:px-4 py-2 hover:bg-gray-100 transition flex items-center gap-2 text-xs sm:text-sm">
+                <i class="fas fa-user text-blue-600 text-xs sm:text-sm"></i>
+                <span>Profile</span>
+              </a>
+              <a href="{% url 'logout' %}" class="block px-3 sm:px-4 py-2 text-red-600 hover:bg-red-50 transition flex items-center gap-2 text-xs sm:text-sm">
+                <i class="fas fa-sign-out-alt text-xs sm:text-sm"></i>
+                <span>Logout</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Search Bar (Hidden by default) -->
+      <div id="mobileSearch" class="md:hidden hidden mt-2 pb-2">
+        <form method="GET" action="{% url 'search-crime' %}" class="relative">
+          <input 
+            type="text" 
+            name="q" 
+            placeholder="Search crime reports..." 
+            value="{{ request.GET.q }}" 
+            class="bg-blue-800 text-sm px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-300 text-gray-100 w-full"
+          >
+          <button type="submit" class="absolute right-0 top-0 mt-2 mr-3 text-gray-400">
+            <i class="fas fa-search"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Action Buttons Bar - Scrollable on mobile WITH TOOLTIPS -->
+    <div class="bg-white px-3 sm:px-6 py-2 sm:py-3 border-b border-gray-200 overflow-x-auto hide-scrollbar" style="overflow-y: visible !important;">
+      <div class="flex items-center justify-between min-w-max sm:min-w-0" style="overflow-y: visible;">
+        <h2 class="text-base sm:text-xl font-semibold text-gray-700 flex items-center mr-4">
+          <i class="fas fa-tachometer-alt text-blue-600 mr-1 sm:mr-2 text-sm sm:text-base"></i>
+          <span class="whitespace-nowrap">Admin Dashboard</span>
+        </h2>
+        <div class="flex gap-2 sm:gap-3" style="overflow-y: visible;">
+          <!-- Departments Button with Tooltip -->
+          <div class="relative tooltip" style="overflow: visible;">
+            <a href="{% url 'department' %}" 
+               class="flex items-center gap-1 sm:gap-2 bg-green-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-green-500 transition font-semibold text-xs sm:text-sm whitespace-nowrap">
+              <i class="fas fa-building text-xs sm:text-sm"></i>
+              <span class="hidden xs:inline">Depts</span>
+            </a>
+            <span class="tooltip-text" id="tooltip-depts">Manage Police Departments</span>
+          </div>
+
+          <!-- Officers Button with Tooltip -->
+          <div class="relative tooltip" style="overflow: visible;">
+            <a href="{% url 'officer-list' %}" 
+               class="flex items-center gap-1 sm:gap-2 bg-blue-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-blue-600 transition font-semibold text-xs sm:text-sm whitespace-nowrap">
+              <i class="fas fa-user-shield text-xs sm:text-sm"></i>
+              <span class="hidden xs:inline">Officers</span>
+            </a>
+            <span class="tooltip-text" id="tooltip-officers">Manage Police Officers</span>
+          </div>
+
+          <!-- Reports Button with Tooltip -->
+          <div class="relative tooltip" style="overflow: visible;">
+            <a href="{% url 'reported-crime' %}" 
+               class="flex items-center gap-1 sm:gap-2 bg-yellow-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-yellow-400 transition font-semibold text-xs sm:text-sm whitespace-nowrap">
+              <i class="fas fa-list text-xs sm:text-sm"></i>
+              <span class="hidden xs:inline">Reports</span>
+            </a>
+            <span class="tooltip-text" id="tooltip-reports">View All Crime Reports</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Menu -->
+  <div id="mobileNav" class="fixed inset-0 bg-blue-900 z-40 transform -translate-x-full transition-transform duration-300 ease-in-out md:hidden mobile-nav">
+    <div class="p-4 overflow-y-auto h-full">
+      <!-- User Info -->
+      <div class="bg-blue-800 rounded-lg p-4 mb-4">
+        <div class="flex items-center gap-3">
+          <img src="{% static 'images/police.jpg' %}" class="w-12 h-12 rounded-full border-2 border-yellow-400" alt="Admin" />
+          <div>
+            <p class="text-white font-bold">{{ user.get_full_name|default:'Admin User' }}</p>
+            <p class="text-blue-300 text-sm">{{ user.email }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Navigation Links -->
+      <nav class="space-y-2">
+        <a href="{% url 'dashboard' %}" class="block px-4 py-3 text-white hover:bg-blue-800 rounded-lg transition flex items-center gap-3">
+          <i class="fas fa-tachometer-alt w-6"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{% url 'department' %}" class="block px-4 py-3 text-white hover:bg-blue-800 rounded-lg transition flex items-center gap-3">
+          <i class="fas fa-building w-6"></i>
+          <span>Departments</span>
+        </a>
+        <a href="{% url 'officer-list' %}" class="block px-4 py-3 text-white hover:bg-blue-800 rounded-lg transition flex items-center gap-3">
+          <i class="fas fa-user-shield w-6"></i>
+          <span>Officers</span>
+        </a>
+        <a href="{% url 'reported-crime' %}" class="block px-4 py-3 text-white hover:bg-blue-800 rounded-lg transition flex items-center gap-3">
+          <i class="fas fa-list w-6"></i>
+          <span>Crime Reports</span>
+        </a>
+      </nav>
+      
+      <!-- Logout -->
+      <div class="mt-8">
+        <a href="{% url 'logout' %}" class="block w-full bg-red-600 text-white text-center py-3 rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="min-h-screen">
+    <div class="container mx-auto px-3 sm:px-6 py-4 sm:py-6">
+      {% block content %}
+      {% endblock %}
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 mt-8 sm:mt-12">
+    <div class="container mx-auto px-3 sm:px-6 py-4 sm:py-6">
+      <div class="text-center text-gray-500 text-xs sm:text-sm">
+        <p>&copy; 2025 QuickReport Nigeria | All Rights Reserved.</p>
+        <p class="mt-1">Nigeria Police Force - Crime Reporting System</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript for Dynamic Tooltip Positioning -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elements
+      const profileBtn = document.getElementById('profileBtn');
+      const dropdown = document.getElementById('dropdownMenu');
+      const notifyBtn = document.getElementById('notifyBtn');
+      const notifyMenu = document.getElementById('notifyMenu');
+      const markAllBtn = document.getElementById('markAllRead');
+      const notificationBadge = document.getElementById('notificationBadge');
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileNav = document.getElementById('mobileNav');
+      const mobileSearchBtn = document.getElementById('mobileSearchBtn');
+      const mobileSearch = document.getElementById('mobileSearch');
+      
+      // Tooltip elements
+      const tooltips = document.querySelectorAll('.tooltip');
+      
+      // Add mouseenter event to position tooltips
+      tooltips.forEach(tooltip => {
+        const tooltipText = tooltip.querySelector('.tooltip-text');
+        const button = tooltip.querySelector('a');
+        
+        if (tooltipText && button) {
+          tooltip.addEventListener('mouseenter', function(e) {
+            const rect = button.getBoundingClientRect();
+            
+            // Position tooltip below the button
+            tooltipText.style.top = (rect.bottom + 8) + 'px';
+            tooltipText.style.left = (rect.left + (rect.width / 2)) + 'px';
+            tooltipText.style.transform = 'translateX(-50%)';
+            
+            // Make sure tooltip stays within viewport
+            const tooltipRect = tooltipText.getBoundingClientRect();
+            if (tooltipRect.right > window.innerWidth) {
+              tooltipText.style.left = (window.innerWidth - tooltipRect.width - 10) + 'px';
+              tooltipText.style.transform = 'none';
+            } else if (tooltipRect.left < 0) {
+              tooltipText.style.left = '10px';
+              tooltipText.style.transform = 'none';
+            }
+          });
+        }
+      });
+      
+      // Profile dropdown
+      if (profileBtn && dropdown) {
+        profileBtn.addEventListener('click', function(event) {
+          event.stopPropagation();
+          dropdown.classList.toggle('hidden');
+          dropdown.classList.toggle('fade-in');
+          
+          // Close notifications if open
+          if (notifyMenu && !notifyMenu.classList.contains('hidden')) {
+            notifyMenu.classList.add('hidden');
+          }
+        });
+      }
+      
+      // Notifications toggle
+      if (notifyBtn && notifyMenu) {
+        notifyBtn.addEventListener('click', function(event) {
+          event.stopPropagation();
+          notifyMenu.classList.toggle('hidden');
+          notifyMenu.classList.toggle('fade-in');
+          
+          // Close profile dropdown if open
+          if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+          }
+        });
+      }
+      
+      // Mark all as read
+      if (markAllBtn) {
+        markAllBtn.addEventListener('click', function(event) {
+          event.preventDefault();
+          event.stopPropagation();
+          
+          fetch('/mark-all-notifications-read/', {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': '{{ csrf_token }}',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'success') {
+              if (notificationBadge) {
+                notificationBadge.style.display = 'none';
+              }
+              
+              document.querySelectorAll('#notificationList > div').forEach(item => {
+                item.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-500');
+                const text = item.querySelector('p.text-sm');
+                if (text) {
+                  text.classList.remove('font-semibold');
+                }
+              });
+              
+              markAllBtn.style.display = 'none';
+            }
+          })
+          .catch(error => console.error('Error:', error));
+        });
+      }
+      
+      // Mobile menu toggle
+      if (mobileMenuBtn && mobileNav) {
+        mobileMenuBtn.addEventListener('click', function() {
+          const icon = this.querySelector('i');
+          if (mobileNav.classList.contains('-translate-x-full')) {
+            mobileNav.classList.remove('-translate-x-full');
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+            document.body.style.overflow = 'hidden';
+          } else {
+            mobileNav.classList.add('-translate-x-full');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+            document.body.style.overflow = 'auto';
+          }
+        });
+      }
+      
+      // Mobile search toggle
+      if (mobileSearchBtn && mobileSearch) {
+        mobileSearchBtn.addEventListener('click', function() {
+          mobileSearch.classList.toggle('hidden');
+        });
+      }
+      
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', function(event) {
+        if (profileBtn && dropdown && !profileBtn.contains(event.target) && !dropdown.contains(event.target)) {
+          dropdown.classList.add('hidden');
+        }
+        
+        if (notifyBtn && notifyMenu && !notifyBtn.contains(event.target) && !notifyMenu.contains(event.target)) {
+          notifyMenu.classList.add('hidden');
+        }
+        
+        if (mobileNav && !mobileNav.classList.contains('-translate-x-full') && 
+            !mobileNav.contains(event.target) && 
+            mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
+          mobileNav.classList.add('-translate-x-full');
+          if (mobileMenuBtn) {
+            const icon = mobileMenuBtn.querySelector('i');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+          }
+          document.body.style.overflow = 'auto';
+        }
+        
+        if (mobileSearch && !mobileSearch.classList.contains('hidden') && 
+            !mobileSearch.contains(event.target) && 
+            mobileSearchBtn && !mobileSearchBtn.contains(event.target)) {
+          mobileSearch.classList.add('hidden');
+        }
+      });
+      
+      // Close mobile nav when clicking a link
+      if (mobileNav) {
+        mobileNav.querySelectorAll('a').forEach(link => {
+          link.addEventListener('click', function() {
+            mobileNav.classList.add('-translate-x-full');
+            if (mobileMenuBtn) {
+              const icon = mobileMenuBtn.querySelector('i');
+              icon.classList.remove('fa-times');
+              icon.classList.add('fa-bars');
+            }
+            document.body.style.overflow = 'auto';
+          });
+        });
+      }
+      
+      // Close mobile nav on window resize
+      window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768 && mobileNav && !mobileNav.classList.contains('-translate-x-full')) {
+          mobileNav.classList.add('-translate-x-full');
+          if (mobileMenuBtn) {
+            const icon = mobileMenuBtn.querySelector('i');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+          }
+          document.body.style.overflow = 'auto';
+        }
+      });
+      
+      // Prevent dropdown close when clicking inside
+      if (dropdown) {
+        dropdown.addEventListener('click', function(event) {
+          event.stopPropagation();
+        });
+      }
+      
+      if (notifyMenu) {
+        notifyMenu.addEventListener('click', function(event) {
+          event.stopPropagation();
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>

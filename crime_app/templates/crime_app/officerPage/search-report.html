@@ -1,0 +1,275 @@
+{% extends 'crime_app/officerPage/main.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen bg-gray-50 py-4 md:py-8 px-3 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="mb-6 md:mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">Search Results</h1>
+                    <div class="flex items-center text-xs md:text-sm text-gray-600">
+                        <i class="fas fa-search mr-2 text-blue-600"></i>
+                        {% if query %}
+                            <span>Results for: <strong class="text-blue-700">"{{ query|truncatechars:30 }}"</strong></span>
+                        {% else %}
+                            <span>Enter a search query to find crime reports</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 md:space-x-3">
+                    <span class="bg-blue-100 text-blue-800 text-xs md:text-sm font-medium px-2 md:px-3 py-1 rounded-full">
+                        {{ results|length }} result{{ results|length|pluralize }}
+                    </span>
+                    <a href="{% url 'search-report' %}" 
+                       class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm transition-colors flex items-center space-x-1">
+                        <i class="fas fa-redo-alt"></i>
+                        <span class="hidden sm:inline">New Search</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        {% if results %}
+        <!-- Mobile Card View -->
+        <div class="block md:hidden space-y-3 mb-6">
+            {% for crime in results %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition">
+                <!-- Header with ID and Status -->
+                <div class="flex items-start justify-between mb-2">
+                    <span class="font-mono font-semibold text-blue-600 text-sm">#{{ crime.report_id }}</span>
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                        {% if crime.status == 'Resolved' %}bg-green-100 text-green-800
+                        {% elif crime.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                        {% elif crime.status == 'Investigating' %}bg-blue-100 text-blue-800
+                        {% elif crime.status == 'Dismissed' %}bg-red-100 text-red-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ crime.status }}
+                    </span>
+                </div>
+
+                <!-- Details Grid -->
+                <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
+                    <div>
+                        <span class="text-gray-500">Dept:</span>
+                        <span class="ml-1 text-gray-800">{{ crime.department.name|truncatechars:15 }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Type:</span>
+                        <span class="ml-1 text-gray-800">{{ crime.incident_type|truncatechars:12 }}</span>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="text-gray-500">Location:</span>
+                        <span class="ml-1 text-gray-800">{{ crime.location|truncatechars:30 }}</span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-end space-x-3 pt-2 border-t border-gray-100">
+                    <a href="{% url 'report-detail' crime.id %}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center space-x-1">
+                        <i class="fas fa-eye text-xs"></i>
+                        <span>View</span>
+                    </a>
+                    <a href="#" 
+                       class="text-gray-600 hover:text-gray-800 text-sm font-medium flex items-center space-x-1">
+                        <i class="fas fa-edit text-xs"></i>
+                        <span>Edit</span>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="py-4 px-6 text-left font-semibold text-gray-700">Report ID</th>
+                            <th class="py-4 px-6 text-left font-semibold text-gray-700">Department</th>
+                            <th class="py-4 px-6 text-left font-semibold text-gray-700">Location</th>
+                            <th class="py-4 px-6 text-left font-semibold text-gray-700">Status</th>
+                            <th class="py-4 px-6 text-left font-semibold text-gray-700">Incident Type</th>
+                            <th class="py-4 px-6 text-center font-semibold text-gray-700">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for crime in results %}
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="py-4 px-6">
+                                <span class="font-mono font-semibold text-blue-600">#{{ crime.report_id }}</span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center">
+                                    <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                                    <span class="text-gray-800">{{ crime.department.name|truncatechars:20 }}</span>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 text-gray-700">{{ crime.location|truncatechars:25 }}</td>
+                            <td class="py-4 px-6">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium 
+                                    {% if crime.status == 'Resolved' %}bg-green-100 text-green-800
+                                    {% elif crime.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif crime.status == 'Investigating' %}bg-blue-100 text-blue-800
+                                    {% elif crime.status == 'Dismissed' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ crime.status }}
+                                </span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center">
+                                    <div class="w-2 h-2 rounded-full mr-3
+                                        {% if crime.incident_type == 'Robbery' %}bg-red-500
+                                        {% elif crime.incident_type == 'Assault' %}bg-orange-500
+                                        {% elif crime.incident_type == 'Theft' %}bg-yellow-500
+                                        {% elif crime.incident_type == 'Burglary' %}bg-purple-500
+                                        {% else %}bg-blue-500{% endif %}"></div>
+                                    <span class="text-gray-800">{{ crime.incident_type|truncatechars:15 }}</span>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="flex justify-center space-x-3">
+                                    <a href="{% url 'report-detail' crime.id %}" 
+                                       class="text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors flex items-center space-x-1">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        <span>View</span>
+                                    </a>
+                                    <a href="#" 
+                                       class="text-gray-600 hover:text-gray-800 font-medium text-sm transition-colors flex items-center space-x-1">
+                                        <i class="fas fa-edit text-xs"></i>
+                                        <span>Edit</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Quick Stats - Fixed Calculations -->
+        <div class="mt-6 md:mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+            <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+                <div class="text-xl md:text-2xl font-bold text-blue-600 mb-1">{{ results|length }}</div>
+                <div class="text-xs md:text-sm text-gray-600">Total Results</div>
+            </div>
+            <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+                <div class="text-xl md:text-2xl font-bold text-green-600 mb-1">
+                    {% with resolved_count=results|dictsort:"status" %}
+                        {% for crime in results %}
+                            {% if crime.status == 'Resolved' %}
+                                {{ forloop.counter }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endwith %}
+                </div>
+                <div class="text-xs md:text-sm text-gray-600">Resolved</div>
+            </div>
+            <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+                <div class="text-xl md:text-2xl font-bold text-yellow-600 mb-1">
+                    {% with pending_count=results|dictsort:"status" %}
+                        {% for crime in results %}
+                            {% if crime.status == 'Pending' %}
+                                {{ forloop.counter }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endwith %}
+                </div>
+                <div class="text-xs md:text-sm text-gray-600">Pending</div>
+            </div>
+            <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+                <div class="text-xl md:text-2xl font-bold text-red-600 mb-1">
+                    {% with priority_count=results|dictsort:"priority" %}
+                        {% for crime in results %}
+                            {% if crime.priority == 'High' or crime.priority == 'Emergency' %}
+                                {{ forloop.counter }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endwith %}
+                </div>
+                <div class="text-xs md:text-sm text-gray-600">High Priority</div>
+            </div>
+        </div>
+
+        <!-- Pagination (if needed) -->
+        {% if is_paginated %}
+        <div class="mt-6 px-4 md:px-6 py-3 md:py-4 bg-white border border-gray-200 rounded-lg">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="text-xs md:text-sm text-gray-700">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} entries
+                </div>
+                <div class="flex space-x-2">
+                    {% if page_obj.has_previous %}
+                    <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}" 
+                       class="px-3 py-1 border border-gray-300 rounded text-xs md:text-sm text-gray-600 hover:bg-gray-50">
+                        <i class="fas fa-chevron-left mr-1"></i>Prev
+                    </a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                    <a href="?q={{ query }}&page={{ page_obj.next_page_number }}" 
+                       class="px-3 py-1 border border-gray-300 rounded text-xs md:text-sm text-gray-600 hover:bg-gray-50">
+                        Next<i class="fas fa-chevron-right ml-1"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- No Results State - Mobile Optimized -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-12 text-center">
+            <div class="max-w-md mx-auto">
+                <div class="bg-gray-100 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
+                    <i class="fas fa-search text-2xl md:text-3xl text-gray-400"></i>
+                </div>
+                
+                {% if query %}
+                <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-2 md:mb-3">No Results Found</h3>
+                <p class="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
+                    No reports found for "<strong class="text-blue-600">{{ query|truncatechars:30 }}</strong>"
+                </p>
+                {% else %}
+                <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-2 md:mb-3">Start Your Search</h3>
+                <p class="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
+                    Enter a search query in the search bar above
+                </p>
+                {% endif %}
+
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-center">
+                    <a href="{% url 'search-report' %}" 
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-colors inline-flex items-center justify-center space-x-2 text-sm md:text-base font-medium">
+                        <i class="fas fa-search"></i>
+                        <span>New Search</span>
+                    </a>
+                    <a href="{% url 'add-report' %}" 
+                       class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-colors inline-flex items-center justify-center space-x-2 text-sm md:text-base font-medium">
+                        <i class="fas fa-plus"></i>
+                        <span>New Report</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        transition: transform 0.2s ease-in-out;
+    }
+    
+    /* Smooth transitions */
+    .transition {
+        transition: all 0.3s ease;
+    }
+</style>
+
+{% endblock %}

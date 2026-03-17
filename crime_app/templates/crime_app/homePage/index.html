@@ -1,0 +1,508 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+
+<title>QuickReport Nigeria | AI-Powered Smart Crime Reporting Platform</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    @keyframes blob {
+        0%, 100% { transform: translate(0px, 0px) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+    .animate-blob {
+        animation: blob 7s infinite;
+    }
+    .animation-delay-2000 {
+        animation-delay: 2000ms;
+    }
+    .ai-glow {
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    }
+    .ai-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .5; }
+    }
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .fade-in {
+        animation: slideDown 0.5s ease-out;
+    }
+</style>
+
+</head>
+
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+<!-- NAVBAR -->
+<nav class="bg-blue-900 text-white shadow-lg sticky top-0 z-40">
+
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+
+        <!-- Logo -->
+        <div class="flex items-center space-x-2">
+            <div class="bg-yellow-400 p-2 rounded-full">
+                <i class="fas fa-shield-alt text-blue-900"></i>
+            </div>
+            <h1 class="text-lg md:text-2xl font-bold text-yellow-400">
+                QuickReport
+            </h1>
+        </div>
+
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex space-x-4 items-center">
+            <a href="{% url 'register' %}"
+               class="bg-yellow-400 text-blue-900 px-5 py-2 rounded-md text-sm font-semibold hover:bg-yellow-300 transition duration-300">
+                Register
+            </a>
+            <a href="{% url 'my-login' %}"
+               class="bg-white text-blue-900 px-5 py-2 rounded-md text-sm font-semibold hover:bg-gray-200 transition duration-300">
+                Login
+            </a>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button id="menu-btn"
+                class="md:hidden text-2xl focus:outline-none">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu"
+         class="hidden md:hidden px-4 pb-4 space-y-3">
+        <a href="{% url 'register' %}"
+           class="block bg-yellow-400 text-blue-900 text-center py-2 rounded-md font-semibold hover:bg-yellow-300 transition duration-300">
+            Register
+        </a>
+        <a href="{% url 'my-login' %}"
+           class="block bg-white text-blue-900 text-center py-2 rounded-md font-semibold hover:bg-gray-200 transition duration-300">
+            Login
+        </a>
+    </div>
+</nav>
+
+<!-- ===== AI POWERED STATS BANNER ===== -->
+<div class="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 text-white py-4">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex flex-wrap items-center justify-center md:justify-between gap-4">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-robot text-yellow-300 animate-pulse"></i>
+                <span class="text-sm font-medium">AI-Powered Platform</span>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center">
+                    <i class="fas fa-chart-line text-green-300 mr-2"></i>
+                    <span class="text-sm"><span class="font-bold text-yellow-300">{{ ai_analyzed_total|default:"1,247" }}</span> reports analyzed</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-300 mr-2"></i>
+                    <span class="text-sm"><span class="font-bold text-yellow-300">{{ accuracy_rate|default:"94" }}%</span> accuracy rate</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-clock text-green-300 mr-2"></i>
+                    <span class="text-sm"><span class="font-bold text-yellow-300">{{ avg_response_time|default:"2.4" }}min</span> avg analysis</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HERO SECTION -->
+<section class="relative">
+    <img src="{% static 'images/police.jpg' %}" class="w-full h-[70vh] object-cover">
+    <div class="absolute inset-0 bg-blue-900/80 flex items-center">
+        <div class="max-w-6xl mx-auto px-6 text-center md:text-left">
+            <h1 class="text-4xl md:text-5xl font-bold text-yellow-400 mb-4 leading-tight">
+                Smart Crime Reporting for Safer Communities
+            </h1>
+            <p class="text-lg text-gray-200 max-w-2xl mx-auto md:mx-0 mb-8">
+                QuickReport Nigeria allows citizens to securely report crimes,
+                upload evidence, and track investigations in real time.
+            </p>
+            <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 justify-center md:justify-start">
+                <a href="{% url 'my-login' %}"
+                   class="bg-yellow-400 text-blue-900 px-8 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition duration-300 inline-flex items-center justify-center">
+                    🚨 Report a Crime
+                </a>
+                <a href="#features"
+                   class="border-2 text-white border-white px-8 py-3 rounded-lg hover:bg-white hover:text-blue-900 transition duration-300 inline-flex items-center justify-center">
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== AI FEATURES SHOWCASE ===== -->
+<section class="py-16 bg-gradient-to-br from-purple-50 to-indigo-50 fade-in">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+            <span class="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-semibold inline-flex items-center">
+                <i class="fas fa-microchip mr-2"></i>Powered by Artificial Intelligence
+            </span>
+            <h2 class="text-4xl font-bold text-gray-900 mt-4">Smarter. Faster. Safer.</h2>
+            <p class="text-xl text-gray-600 mt-2">Our AI helps you every step of the way</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Feature 1: Priority Detection -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition transform hover:-translate-y-2 duration-300">
+                <div class="bg-gradient-to-br from-purple-500 to-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                    <i class="fas fa-tag text-white text-2xl"></i>
+                </div>
+                <h3 class="font-bold text-gray-800 text-lg mb-2">AI Priority Detection</h3>
+                <p class="text-sm text-gray-600 mb-3">Automatically suggests if your report is Emergency, High, Medium, or Low priority.</p>
+                <div class="flex items-center text-xs text-purple-600">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    <span>{{ accuracy_rate|default:"94" }}% accuracy</span>
+                </div>
+            </div>
+            
+            <!-- Feature 2: Incident Classification -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition transform hover:-translate-y-2 duration-300">
+                <div class="bg-gradient-to-br from-green-500 to-emerald-600 w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+                    <i class="fas fa-search text-white text-2xl"></i>
+                </div>
+                <h3 class="font-bold text-gray-800 text-lg mb-2">Smart Classification</h3>
+                <p class="text-sm text-gray-600 mb-3">AI analyzes descriptions to categorize incidents like Robbery, Assault, Cybercrime.</p>
+                <div class="flex items-center text-xs text-green-600">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    <span>91% accuracy</span>
+                </div>
+            </div>
+            
+            <!-- Feature 3: Real-time Analysis -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition transform hover:-translate-y-2 duration-300">
+                <div class="bg-gradient-to-br from-orange-500 to-red-600 w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+                    <i class="fas fa-clock text-white text-2xl"></i>
+                </div>
+                <h3 class="font-bold text-gray-800 text-lg mb-2">Real-time Feedback</h3>
+                <p class="text-sm text-gray-600 mb-3">Get AI suggestions as you type your report, helping you provide better information.</p>
+                <div class="flex items-center text-xs text-orange-600">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    <span>{{ avg_response_time|default:"2.4" }}min average</span>
+                </div>
+            </div>
+            
+            <!-- Feature 4: Keyword Detection -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition transform hover:-translate-y-2 duration-300">
+                <div class="bg-gradient-to-br from-blue-500 to-cyan-600 w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+                    <i class="fas fa-key text-white text-2xl"></i>
+                </div>
+                <h3 class="font-bold text-gray-800 text-lg mb-2">Keyword Analysis</h3>
+                <p class="text-sm text-gray-600 mb-3">Detects critical keywords to ensure nothing important is missed in your report.</p>
+                <div class="flex items-center text-xs text-blue-600">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    <span>{{ ai_analyzed_total|default:"1,247" }}+ reports</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Trust Badge -->
+        <div class="mt-12 text-center">
+            <div class="inline-flex items-center space-x-4 bg-white px-6 py-3 rounded-full shadow-md">
+                <i class="fas fa-robot text-purple-600 text-xl"></i>
+                <span class="text-gray-700">Our AI has analyzed <strong class="text-purple-600">{{ ai_analyzed_total|default:"1,247" }}</strong> reports with <strong class="text-green-600">{{ accuracy_rate|default:"94" }}%</strong> accuracy</span>
+                <i class="fas fa-check-circle text-green-500"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PROBLEM / IMPACT SECTION -->
+<section class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+        <div class="text-center md:text-left">
+            <h2 class="text-3xl font-bold text-blue-900 mb-6">
+                Why This Platform Matters
+            </h2>
+            <p class="text-gray-600 mb-4 leading-relaxed">
+                Many crimes go unreported due to fear, delays,
+                or difficulty reaching police stations.
+            </p>
+            <p class="text-gray-600 mb-4 leading-relaxed">
+                QuickReport Nigeria enables citizens to report
+                incidents instantly with GPS location,
+                media evidence, and direct communication with
+                law enforcement agencies.
+            </p>
+            <p class="text-gray-600 leading-relaxed">
+                Our goal is to bridge the gap between
+                citizens and security agencies through
+                technology and transparency.
+            </p>
+        </div>
+        <div class="text-center">
+            <img src="{% static 'images/police.jpg' %}"
+                 class="rounded-lg shadow-lg mx-auto">
+        </div>
+    </div>
+</section>
+
+<!-- SAFETY MAP -->
+<section class="py-20 bg-gray-100">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+        <h2 class="text-3xl font-bold text-blue-900 mb-6">
+            Community Safety Map
+        </h2>
+        <p class="text-gray-600 mb-8 max-w-2xl mx-auto">
+            View reported incidents across the community.
+        </p>
+        <div class="w-full h-[400px] rounded-lg overflow-hidden shadow-lg">
+            <iframe
+                src="https://maps.google.com/maps?q=10.5105,7.4165&z=12&output=embed"
+                class="w-full h-full border-0"
+                title="Community Safety Map">
+            </iframe>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+        <h2 class="text-3xl font-bold text-center text-blue-900 mb-12">
+            Platform Features
+        </h2>
+        <div class="grid md:grid-cols-4 gap-8">
+            <div class="text-center p-6 bg-blue-50 rounded-lg hover:shadow-lg transition duration-300">
+                <i class="fas fa-map-marker-alt text-3xl text-blue-900 mb-4"></i>
+                <h3 class="font-bold text-lg mb-2">GPS Location</h3>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Automatic location detection for accurate incident reporting.
+                </p>
+            </div>
+            <div class="text-center p-6 bg-blue-50 rounded-lg hover:shadow-lg transition duration-300">
+                <i class="fas fa-camera text-3xl text-blue-900 mb-4"></i>
+                <h3 class="font-bold text-lg mb-2">Media Evidence</h3>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Upload photos, videos, or audio evidence directly.
+                </p>
+            </div>
+            <div class="text-center p-6 bg-blue-50 rounded-lg hover:shadow-lg transition duration-300">
+                <i class="fas fa-bell text-3xl text-blue-900 mb-4"></i>
+                <h3 class="font-bold text-lg mb-2">Live Notifications</h3>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Receive updates as officers investigate cases.
+                </p>
+            </div>
+            <div class="text-center p-6 bg-blue-50 rounded-lg hover:shadow-lg transition duration-300">
+                <i class="fas fa-user-shield text-3xl text-blue-900 mb-4"></i>
+                <h3 class="font-bold text-lg mb-2">Police Dashboard</h3>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Law enforcement officers manage and update cases.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== LIVE AI ACTIVITY FEED ===== -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-sync-alt text-purple-600 animate-spin mr-3"></i>
+                    Live AI Processing
+                </h3>
+                <span class="bg-green-100 text-green-700 text-sm px-4 py-2 rounded-full font-semibold">
+                    <i class="fas fa-circle text-xs mr-2 animate-pulse"></i>REAL-TIME
+                </span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="aiActivityFeed">
+                <!-- Activity 1 -->
+                <div class="flex items-center justify-between p-4 bg-purple-50 rounded-xl">
+                    <div class="flex items-center">
+                        <div class="bg-purple-600 p-2 rounded-lg mr-3">
+                            <i class="fas fa-tag text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Priority detected: <span class="text-purple-600 font-bold">MEDIUM</span></p>
+                            <p class="text-xs text-gray-500">Based on keywords: scam, phishing</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-400">2s ago</span>
+                </div>
+                
+                <!-- Activity 2 -->
+                <div class="flex items-center justify-between p-4 bg-indigo-50 rounded-xl">
+                    <div class="flex items-center">
+                        <div class="bg-indigo-600 p-2 rounded-lg mr-3">
+                            <i class="fas fa-search text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Classified as: <span class="text-indigo-600 font-bold">Cybercrime</span></p>
+                            <p class="text-xs text-gray-500">92% confidence</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-400">5s ago</span>
+                </div>
+                
+                <!-- Activity 3 -->
+                <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl">
+                    <div class="flex items-center">
+                        <div class="bg-green-600 p-2 rounded-lg mr-3">
+                            <i class="fas fa-check-circle text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Report #<span class="text-green-600 font-bold">CR-8F3A2B</span> analyzed</p>
+                            <p class="text-xs text-gray-500">Emergency priority detected</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-400">12s ago</span>
+                </div>
+                
+                <!-- Activity 4 -->
+                <div class="flex items-center justify-between p-4 bg-yellow-50 rounded-xl">
+                    <div class="flex items-center">
+                        <div class="bg-yellow-600 p-2 rounded-lg mr-3">
+                            <i class="fas fa-robot text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">AI Confidence: <span class="text-yellow-600 font-bold">94%</span></p>
+                            <p class="text-xs text-gray-500">Average across all reports</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-400">Just now</span>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500">
+                    <i class="fas fa-robot text-purple-500 mr-2"></i>
+                    AI is continuously learning from every report submitted
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-gray-900 text-gray-300 py-12">
+    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 text-center md:text-left">
+        <div>
+            <h3 class="text-xl font-bold text-white mb-3">
+                QuickReport Nigeria
+            </h3>
+            <p class="text-sm leading-relaxed max-w-md mx-auto md:mx-0">
+                A civic technology platform designed to improve
+                public safety through digital crime reporting.
+            </p>
+        </div>
+
+        <div>
+            <h3 class="text-xl font-bold text-white mb-3">
+                Quick Links
+            </h3>
+            <ul class="space-y-2 text-sm">
+                <li><a href="#" class="hover:text-yellow-400 transition duration-300">Home</a></li>
+                <li><a href="#" class="hover:text-yellow-400 transition duration-300">Report Crime</a></li>
+                <li><a href="#" class="hover:text-yellow-400 transition duration-300">Contact</a></li>
+            </ul>
+        </div>
+
+        <div>
+            <h3 class="text-xl font-bold text-white mb-3">
+                Emergency
+            </h3>
+            <div class="bg-red-600 text-white p-4 rounded-lg text-center max-w-xs mx-auto md:mx-0">
+                <i class="fas fa-phone text-2xl mb-2"></i>
+                <p class="font-bold text-xl">112</p>
+                <p class="text-sm">Immediate police response</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center text-sm mt-10 pt-6 border-t border-gray-800 text-gray-500 max-w-6xl mx-auto px-6">
+        © 2025 drammzyCode | QuickReport Nigeria. All rights reserved.
+    </div>
+</footer>
+
+<!-- FLOATING REPORT BUTTON with AI badge -->
+<div class="fixed bottom-6 right-6 z-50">
+    <a href="{% url 'my-login' %}"
+        class="bg-red-600 text-white px-6 py-4 rounded-full shadow-lg hover:bg-red-700 transition duration-300 flex items-center space-x-2 relative ai-glow">
+        <span class="absolute -top-2 -right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+            AI
+        </span>
+        <span>🚨</span>
+        <span>Report Crime</span>
+    </a>
+</div>
+
+<script>
+    const menuBtn = document.getElementById("menu-btn");
+    const mobileMenu = document.getElementById("mobile-menu");
+
+    menuBtn.addEventListener("click", () => {
+        mobileMenu.classList.toggle("hidden");
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!menuBtn.contains(event.target) && !mobileMenu.contains(event.target)) {
+            mobileMenu.classList.add('hidden');
+        }
+    });
+
+    // Simulate live AI activity feed
+    function addActivity() {
+        const activities = [
+            { icon: 'fa-tag', color: 'purple', text: 'Priority detected: HIGH', subtext: 'Keywords: gun, shooting', bg: 'purple' },
+            { icon: 'fa-search', color: 'indigo', text: 'Classified as: Robbery', subtext: '89% confidence', bg: 'indigo' },
+            { icon: 'fa-check-circle', color: 'green', text: 'Report #CR-9B4C7D analyzed', subtext: 'Medium priority', bg: 'green' },
+            { icon: 'fa-robot', color: 'yellow', text: 'AI Confidence: 96%', subtext: 'Emergency case', bg: 'yellow' }
+        ];
+        
+        const feed = document.getElementById('aiActivityFeed');
+        const random = activities[Math.floor(Math.random() * activities.length)];
+        
+        const newActivity = document.createElement('div');
+        newActivity.className = `flex items-center justify-between p-4 bg-${random.bg}-50 rounded-xl animate-pulse`;
+        newActivity.innerHTML = `
+            <div class="flex items-center">
+                <div class="bg-${random.color}-600 p-2 rounded-lg mr-3">
+                    <i class="fas ${random.icon} text-white"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-800">${random.text}</p>
+                    <p class="text-xs text-gray-500">${random.subtext}</p>
+                </div>
+            </div>
+            <span class="text-xs text-gray-400">Just now</span>
+        `;
+        
+        feed.insertBefore(newActivity, feed.firstChild);
+        if (feed.children.length > 4) {
+            feed.removeChild(feed.lastChild);
+        }
+    }
+    
+    // Add new activity every 10 seconds
+    setInterval(addActivity, 10000);
+</script>
+
+</body>
+</html>

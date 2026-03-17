@@ -1,0 +1,454 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Dashboard | QuickReport Nigeria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Better mobile tap targets */
+        button, a {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Custom animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .mobile-menu-open {
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        /* Ensure content doesn't hide behind fixed navbar */
+        body {
+            padding-top: 64px; /* Fixed height for mobile */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        @media (min-width: 768px) {
+            body {
+                padding-top: 80px; /* Larger padding for desktop */
+            }
+        }
+        
+        /* Active nav link indicator */
+        .nav-link-active {
+            position: relative;
+        }
+        
+        .nav-link-active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #fbbf24; /* yellow-400 */
+            border-radius: 2px;
+        }
+        
+        /* Loading animation */
+        .loading-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+    
+    <!-- Fixed Navbar -->
+    <!-- Fixed Navbar -->
+<nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-lg fixed top-0 left-0 right-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16 md:h-20">
+            <!-- Logo - Left Side -->
+            <div class="flex items-center space-x-2 md:space-x-3">
+                <div class="bg-yellow-400 p-1.5 md:p-2 rounded-lg md:rounded-xl shadow-lg transform hover:rotate-12 transition duration-300">
+                    <i class="fas fa-shield-alt text-blue-900 text-lg md:text-xl"></i>
+                </div>
+                <div class="flex flex-col">
+                    <h1 class="text-base md:text-xl font-bold text-yellow-400 leading-tight">
+                        <a href="{% url 'user-board' %}" class="hover:text-yellow-300 transition">QuickReport NG</a>
+                    </h1>
+                    <p class="text-[10px] md:text-xs text-blue-200 hidden xs:block">Citizen Safety Platform</p>
+                </div>
+            </div>
+
+            <!-- Desktop Navigation - Center (hidden on mobile) -->
+            <div class="hidden md:flex items-center space-x-1 lg:space-x-4">
+                {% with request.resolver_match.url_name as url_name %}
+                <a href="{% url 'user-board' %}" 
+                   class="px-3 py-2 rounded-lg hover:bg-blue-800 transition font-medium flex items-center space-x-2 {% if url_name == 'user-board' %}bg-blue-800 text-yellow-400{% endif %}">
+                    <i class="fas fa-tachometer-alt {% if url_name == 'user-board' %}text-yellow-400{% endif %}"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'user-report' %}" 
+                   class="px-3 py-2 rounded-lg hover:bg-blue-800 transition font-medium flex items-center space-x-2 {% if url_name == 'user-report' %}bg-blue-800 text-yellow-400{% endif %}">
+                    <i class="fas fa-plus-circle {% if url_name == 'user-report' %}text-yellow-400{% endif %}"></i>
+                    <span>Report</span>
+                </a>
+                <a href="{% url 'report-history' %}" 
+                   class="px-3 py-2 rounded-lg hover:bg-blue-800 transition font-medium flex items-center space-x-2 {% if url_name == 'report-history' %}bg-blue-800 text-yellow-400{% endif %}">
+                    <i class="fas fa-history {% if url_name == 'report-history' %}text-yellow-400{% endif %}"></i>
+                    <span>History</span>
+                </a>
+                <a href="{% url 'citizen_notifications' %}" 
+                   class="px-3 py-2 rounded-lg hover:bg-blue-800 transition font-medium flex items-center space-x-2 relative {% if url_name == 'citizen_notifications' %}bg-blue-800 text-yellow-400{% endif %}">
+                    <i class="fas fa-bell {% if url_name == 'citizen_notifications' %}text-yellow-400{% endif %}"></i>
+                    <span>Alerts</span>
+                    {% if unread_count > 0 %}
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center animate-pulse shadow-lg">
+                        {{ unread_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                {% endwith %}
+            </div>
+
+            <!-- User Menu & Mobile Button - Right Side -->
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <!-- Welcome Text (hidden on mobile) -->
+                <span class="hidden lg:block text-sm text-blue-200">Welcome,</span>
+                <span class="hidden lg:block text-sm font-semibold max-w-[150px] truncate">{{ user.get_full_name|default:user.username }}</span>
+                
+                <!-- User Menu Dropdown - DESKTOP ONLY -->
+                <div class="relative hidden md:block">
+                    <button id="userMenu" class="flex items-center space-x-1 md:space-x-2 text-sm bg-blue-800 hover:bg-blue-700 px-2 md:px-3 py-1.5 md:py-2 rounded-lg transition group">
+                        <i class="fas fa-user-circle text-lg md:text-xl"></i>
+                        <span class="hidden sm:block">Account</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform group-hover:rotate-180"></i>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="userDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white text-gray-800 rounded-xl shadow-xl py-2 z-50 border border-gray-200 transform origin-top-right transition-all duration-200">
+                        <!-- User Info Header -->
+                        <div class="px-4 py-3 border-b border-gray-100">
+                            <p class="text-sm font-semibold text-gray-800">{{ user.get_full_name|default:user.username }}</p>
+                            <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+                        </div>
+                        
+                        <!-- Menu Items -->
+                        <a href="{% url 'user-board' %}" class="block px-4 py-2.5 hover:bg-gray-50 transition group">
+                            <i class="fas fa-tachometer-alt mr-3 text-blue-600 w-5 group-hover:scale-110"></i>Dashboard
+                        </a>
+                        <a href="{% url 'user-report' %}" class="block px-4 py-2.5 hover:bg-gray-50 transition group">
+                            <i class="fas fa-plus-circle mr-3 text-green-600 w-5 group-hover:scale-110"></i>Report Crime
+                        </a>
+                        <a href="{% url 'report-history' %}" class="block px-4 py-2.5 hover:bg-gray-50 transition group">
+                            <i class="fas fa-history mr-3 text-purple-600 w-5 group-hover:scale-110"></i>Report History
+                        </a>
+                        <a href="{% url 'citizen_notifications' %}" class="block px-4 py-2.5 hover:bg-gray-50 transition group relative">
+                            <i class="fas fa-bell mr-3 text-yellow-600 w-5 group-hover:scale-110"></i>Notifications
+                            {% if unread_count > 0 %}
+                            <span class="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+                        
+                        <div class="border-t my-1"></div>
+                        
+                        <a href="{% url 'logout' %}" class="block px-4 py-2.5 text-red-600 hover:bg-red-50 transition group">
+                            <i class="fas fa-sign-out-alt mr-3 w-5 group-hover:scale-110"></i>Logout
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Mobile User Icon (shows instead of dropdown) -->
+                <div class="md:hidden flex items-center">
+                    <div class="bg-blue-800 p-2 rounded-lg">
+                        <i class="fas fa-user-circle text-xl"></i>
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <button id="mobileMenuButton" class="md:hidden text-white p-2 hover:bg-blue-800 rounded-lg transition">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu (Hidden by default) -->
+        <div id="mobileMenu" class="hidden md:hidden border-t border-blue-700/50 py-4 px-2 space-y-1 mobile-menu-open">
+            {% with request.resolver_match.url_name as url_name %}
+            <a href="{% url 'user-board' %}" 
+               class="flex items-center space-x-3 px-4 py-3 rounded-lg {% if url_name == 'user-board' %}bg-blue-800 text-yellow-400{% else %}text-white hover:bg-blue-800/50{% endif %} transition">
+                <i class="fas fa-tachometer-alt w-6 {% if url_name == 'user-board' %}text-yellow-400{% endif %}"></i>
+                <span class="font-medium">Dashboard</span>
+                {% if url_name == 'user-board' %}
+                <i class="fas fa-check ml-auto text-yellow-400"></i>
+                {% endif %}
+            </a>
+            
+            <a href="{% url 'user-report' %}" 
+               class="flex items-center space-x-3 px-4 py-3 rounded-lg {% if url_name == 'user-report' %}bg-blue-800 text-yellow-400{% else %}text-white hover:bg-blue-800/50{% endif %} transition">
+                <i class="fas fa-plus-circle w-6 {% if url_name == 'user-report' %}text-yellow-400{% endif %}"></i>
+                <span class="font-medium">Report Crime</span>
+                {% if url_name == 'user-report' %}
+                <i class="fas fa-check ml-auto text-yellow-400"></i>
+                {% endif %}
+            </a>
+            
+            <a href="{% url 'report-history' %}" 
+               class="flex items-center space-x-3 px-4 py-3 rounded-lg {% if url_name == 'report-history' %}bg-blue-800 text-yellow-400{% else %}text-white hover:bg-blue-800/50{% endif %} transition">
+                <i class="fas fa-history w-6 {% if url_name == 'report-history' %}text-yellow-400{% endif %}"></i>
+                <span class="font-medium">Report History</span>
+                {% if url_name == 'report-history' %}
+                <i class="fas fa-check ml-auto text-yellow-400"></i>
+                {% endif %}
+            </a>
+            
+            <a href="{% url 'citizen_notifications' %}" 
+               class="flex items-center space-x-3 px-4 py-3 rounded-lg {% if url_name == 'citizen_notifications' %}bg-blue-800 text-yellow-400{% else %}text-white hover:bg-blue-800/50{% endif %} transition relative">
+                <i class="fas fa-bell w-6 {% if url_name == 'citizen_notifications' %}text-yellow-400{% endif %}"></i>
+                <span class="font-medium">Notifications</span>
+                {% if unread_count > 0 %}
+                <span class="ml-auto bg-red-500 text-white text-xs rounded-full min-w-[24px] h-6 px-2 flex items-center justify-center animate-pulse">
+                    {{ unread_count }} new
+                </span>
+                {% endif %}
+            </a>
+            
+            <!-- Mobile User Info Section (expanded) -->
+            <div class="pt-4 mt-4 border-t border-blue-700/50">
+                <div class="px-4 py-3 bg-blue-800/30 rounded-lg">
+                    <div class="flex items-center space-x-3 mb-2">
+                        <div class="bg-yellow-400 p-2 rounded-full">
+                            <i class="fas fa-user text-blue-900"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-blue-200">Signed in as</p>
+                            <p class="font-semibold text-white">{{ user.get_full_name|default:user.username }}</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-blue-300 truncate pl-10">{{ user.email }}</p>
+                </div>
+                
+               
+                
+                <a href="{% url 'logout' %}" class="flex items-center space-x-3 px-4 py-3 mt-2 text-red-300 hover:bg-red-600/20 rounded-lg transition">
+                    <i class="fas fa-sign-out-alt w-6"></i>
+                    <span class="font-medium">Logout</span>
+                </a>
+            </div>
+            {% endwith %}
+        </div>
+    </div>
+</nav>
+
+    <!-- Main Content -->
+    <main class="min-h-screen">
+        <!-- Messages/Alerts -->
+        {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+            {% for message in messages %}
+            <div class="rounded-lg p-4 mb-4 {% if message.tags == 'success' %}bg-green-100 text-green-700 border border-green-200{% elif message.tags == 'error' %}bg-red-100 text-red-700 border border-red-200{% else %}bg-blue-100 text-blue-700 border border-blue-200{% endif %} flex items-center justify-between animate-slideDown">
+                <div class="flex items-center space-x-2">
+                    {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle"></i>
+                    {% elif message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle"></i>
+                    {% else %}
+                    <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                    <span>{{ message }}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer (Optional) -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <p class="text-center text-gray-500 text-sm">
+                © 2024 QuickReport Nigeria. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // DOM Content Loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // User menu dropdown
+            const userMenuBtn = document.getElementById('userMenu');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    userDropdown.classList.toggle('hidden');
+                    
+                    // Add small animation
+                    if (!userDropdown.classList.contains('hidden')) {
+                        userDropdown.style.transform = 'scale(1)';
+                    }
+                });
+            }
+
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobileMenuButton');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                    
+                    // Toggle icon
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        if (icon.classList.contains('fa-bars')) {
+                            icon.classList.remove('fa-bars');
+                            icon.classList.add('fa-times');
+                        } else {
+                            icon.classList.remove('fa-times');
+                            icon.classList.add('fa-bars');
+                        }
+                    }
+                    
+                    // Prevent body scroll when mobile menu is open
+                    document.body.style.overflow = mobileMenu.classList.contains('hidden') ? 'auto' : 'hidden';
+                });
+            }
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(event) {
+                // Close user dropdown
+                if (userMenuBtn && userDropdown && 
+                    !userMenuBtn.contains(event.target) && 
+                    !userDropdown.contains(event.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+
+                // Close mobile menu when clicking on a link (but not the button)
+                if (mobileMenu && !mobileMenu.contains(event.target) && 
+                    mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
+                    mobileMenu.classList.add('hidden');
+                    
+                    // Reset icon
+                    const icon = mobileMenuBtn.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                    
+                    // Restore body scroll
+                    document.body.style.overflow = 'auto';
+                }
+            });
+
+            // Close mobile menu when clicking on a link
+            if (mobileMenu) {
+                mobileMenu.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenu.classList.add('hidden');
+                        
+                        // Reset icon
+                        if (mobileMenuBtn) {
+                            const icon = mobileMenuBtn.querySelector('i');
+                            if (icon) {
+                                icon.classList.remove('fa-times');
+                                icon.classList.add('fa-bars');
+                            }
+                        }
+                        
+                        // Restore body scroll
+                        document.body.style.overflow = 'auto';
+                    });
+                });
+            }
+
+            // Prevent dropdown close when clicking inside dropdown
+            if (userDropdown) {
+                userDropdown.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+            }
+
+            // Handle window resize
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    // Close mobile menu on resize if screen becomes desktop
+                    if (window.innerWidth >= 768 && mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                        
+                        // Reset icon
+                        if (mobileMenuBtn) {
+                            const icon = mobileMenuBtn.querySelector('i');
+                            if (icon) {
+                                icon.classList.remove('fa-times');
+                                icon.classList.add('fa-bars');
+                            }
+                        }
+                        
+                        // Restore body scroll
+                        document.body.style.overflow = 'auto';
+                    }
+                }, 250);
+            });
+
+            // Auto-hide messages after 5 seconds
+            document.querySelectorAll('.rounded-lg.p-4.mb-4').forEach(message => {
+                setTimeout(() => {
+                    message.style.transition = 'opacity 0.5s';
+                    message.style.opacity = '0';
+                    setTimeout(() => message.remove(), 500);
+                }, 5000);
+            });
+
+            // Mark active nav links
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('nav a').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('nav-link-active');
+                }
+            });
+        });
+
+        // Smooth scroll to top when navigating
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,321 @@
+{% extends "crime_app/adminPage/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<!-- Single Combined Stats Row - Basic + AI Together -->
+<section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <!-- Total Reports + AI Coverage (Combined) -->
+    <div class="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+        <div class="absolute top-0 right-0 bg-white/20 px-2 py-1 text-xs rounded-bl-lg">AI</div>
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-file-alt text-2xl opacity-80"></i>
+            <span class="text-3xl font-bold">{{ total_reports }}</span>
+        </div>
+        <p class="text-sm font-semibold">TOTAL REPORTS</p>
+        <div class="flex justify-between text-xs text-blue-200 mt-2">
+            <span>AI Analyzed: {{ ai_analyzed }}</span>
+            <span>{{ ai_coverage }}% coverage</span>
+        </div>
+        <div class="w-full bg-white/20 rounded-full h-1 mt-2">
+            <div class="bg-white h-1 rounded-full" style="width: {{ ai_coverage }}%"></div>
+        </div>
+    </div>
+
+    <!-- Resolved + Accuracy (Combined) -->
+    <div class="bg-gradient-to-br from-green-600 to-green-700 text-white p-5 rounded-2xl shadow-lg">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-check-circle text-2xl opacity-80"></i>
+            <span class="text-3xl font-bold">{{ resolved_cases }}</span>
+        </div>
+        <p class="text-sm font-semibold">RESOLVED</p>
+        <div class="flex justify-between text-xs text-green-200 mt-2">
+            <span>{{ ai_accuracy }}% accuracy</span>
+            <span>{{ ai_conflicts }} conflicts</span>
+        </div>
+        <div class="flex items-center mt-2">
+            <i class="fas fa-robot text-xs text-green-200 mr-1"></i>
+            <span class="text-xs text-green-200">{{ matches_count }} AI matches</span>
+        </div>
+    </div>
+
+    <!-- Pending + Confidence (Combined) -->
+    <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-5 rounded-2xl shadow-lg">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-clock text-2xl opacity-80"></i>
+            <span class="text-3xl font-bold">{{ pending_reports }}</span>
+        </div>
+        <p class="text-sm font-semibold">PENDING</p>
+        <div class="flex justify-between text-xs text-yellow-200 mt-2">
+            <span>Avg Confidence</span>
+            <span>{{ avg_confidence }}%</span>
+        </div>
+        <div class="w-full bg-white/20 rounded-full h-1.5 mt-2">
+            <div class="bg-white h-1.5 rounded-full" style="width: {{ avg_confidence }}%"></div>
+        </div>
+    </div>
+
+    <!-- Departments + Emergency + High (Combined) -->
+    <div class="bg-gradient-to-br from-purple-600 to-purple-700 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+        <div class="absolute top-0 right-0 bg-white/20 px-2 py-1 text-xs rounded-bl-lg">AI</div>
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-building text-2xl opacity-80"></i>
+            <span class="text-3xl font-bold">{{ total_departments }}</span>
+        </div>
+        <p class="text-sm font-semibold">DEPARTMENTS</p>
+        <div class="grid grid-cols-2 gap-2 mt-2 text-xs">
+            <div>
+                <span class="text-purple-200">Emergency</span>
+                <p class="font-bold">{{ priority_dist.Emergency }}</p>
+            </div>
+            <div>
+                <span class="text-purple-200">High</span>
+                <p class="font-bold">{{ priority_dist.High }}</p>
+            </div>
+            <div>
+                <span class="text-purple-200">Medium</span>
+                <p class="font-bold">{{ priority_dist.Medium }}</p>
+            </div>
+            <div>
+                <span class="text-purple-200">Low</span>
+                <p class="font-bold">{{ priority_dist.Low }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AI Performance Summary - Single Card -->
+<div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
+    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+        <i class="fas fa-robot text-purple-600 mr-3"></i>
+        AI Performance Summary
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- High Confidence -->
+        <div class="text-center p-4 bg-green-50 rounded-xl">
+            <p class="text-2xl font-bold text-green-600">{{ high_conf }}</p>
+            <p class="text-sm text-gray-600">High Confidence</p>
+            <p class="text-xs text-gray-400">>80% certainty</p>
+        </div>
+        
+        <!-- Medium Confidence -->
+        <div class="text-center p-4 bg-yellow-50 rounded-xl">
+            <p class="text-2xl font-bold text-yellow-600">{{ medium_conf }}</p>
+            <p class="text-sm text-gray-600">Medium Confidence</p>
+            <p class="text-xs text-gray-400">50-80% certainty</p>
+        </div>
+        
+        <!-- Low Confidence -->
+        <div class="text-center p-4 bg-red-50 rounded-xl">
+            <p class="text-2xl font-bold text-red-600">{{ low_conf }}</p>
+            <p class="text-sm text-gray-600">Low Confidence</p>
+            <p class="text-xs text-gray-400"><50% certainty</p>
+        </div>
+        
+        <!-- Top Department -->
+        <div class="text-center p-4 bg-purple-50 rounded-xl">
+            <p class="text-2xl font-bold text-purple-600">
+                {% if dept_ai_counts.0 %}
+                    {{ dept_ai_counts.0.ai_count }}
+                {% else %}
+                    0
+                {% endif %}
+            </p>
+            <p class="text-sm text-gray-600">Top Department</p>
+            <p class="text-xs text-gray-400">
+                {% if dept_ai_counts.0 %}
+                    {{ dept_ai_counts.0.name|truncatechars:15 }}
+                {% else %}
+                    No data
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Monthly Trend Sparkline -->
+    {% if monthly_ai_data %}
+    <div class="mt-6 pt-4 border-t border-gray-100">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-gray-700">Monthly AI Trend</span>
+            <span class="text-xs text-gray-500">Last 6 months</span>
+        </div>
+        <div class="flex items-end space-x-1 h-12">
+            {% for item in monthly_ai_data %}
+            <div class="flex-1 flex flex-col items-center">
+                <div class="w-full bg-purple-100 rounded-t" 
+                     style="height: {% widthratio item.count monthly_ai_data|dictsort:"count"|last 100 %}%"></div>
+                <span class="text-xs text-gray-500 mt-1">{{ item.month }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recent Reports Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Recent Reports -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-history text-blue-600 mr-3"></i>
+                    Recent Crime Reports
+                </h2>
+                <a href="{% url 'reported-crime' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold flex items-center">
+                    View All <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+
+            {% if recent_reports %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold text-sm">Report Title</th>
+                            <th class="px-6 py-4 font-semibold text-sm">Reporter</th>
+                            <th class="px-6 py-4 font-semibold text-sm">Department</th>
+                            <th class="px-6 py-4 font-semibold text-sm">Status</th>
+                            <th class="px-6 py-4 font-semibold text-sm">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for report in recent_reports %}
+                        <tr class="hover:bg-blue-50 transition duration-200 group cursor-pointer" onclick="location.href='{% url 'crime-detail' report.id %}'">
+                            <td class="px-6 py-4">
+                                <div class="font-semibold text-gray-800 group-hover:text-blue-700 transition">{{ report.title }}</div>
+                                <div class="text-xs text-gray-500 mt-1">ID: #{{ report.id }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-gray-700">{{ report.reporter.get_full_name }}</div>
+                                <div class="text-xs text-gray-500">{{ report.reporter.email }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                                    <i class="fas fa-building mr-2 text-blue-600"></i>
+                                    {{ report.department.name|default:"Unassigned" }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
+                                    {% if report.status == 'Pending' %}bg-yellow-100 text-yellow-800 border border-yellow-200
+                                    {% elif report.status == 'Resolved' %}bg-green-100 text-green-800 border border-green-200
+                                    {% elif report.status == 'Investigating' %}bg-blue-100 text-blue-800 border border-blue-200
+                                    {% elif report.status == 'Dismissed' %}bg-red-100 text-red-800 border border-red-200
+                                    {% else %}bg-gray-100 text-gray-800 border border-gray-200{% endif %}">
+                                    <i class="fas fa-circle text-xs mr-2 
+                                        {% if report.status == 'Pending' %}text-yellow-500
+                                        {% elif report.status == 'Resolved' %}text-green-500
+                                        {% elif report.status == 'Investigating' %}text-blue-500
+                                        {% elif report.status == 'Dismissed' %}text-red-500
+                                        {% else %}text-gray-500{% endif %}"></i>
+                                    {{ report.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-gray-600 font-medium">{{ report.date_reported|date:"M d, Y" }}</div>
+                                <div class="text-xs text-gray-500">{{ report.date_reported|timesince }} ago</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <div class="bg-gradient-to-br from-blue-100 to-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-file-alt text-blue-400 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-700 mb-3">No Reports Yet</h3>
+                <p class="text-gray-500 mb-6 max-w-md mx-auto">No crime reports have been submitted yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="space-y-6">
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-bolt text-yellow-500 mr-3"></i>
+                Quick Actions
+            </h2>
+            <div class="space-y-3">
+                <a href="{% url 'reported-crime' %}" class="flex items-center justify-between p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition group border border-blue-100">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-blue-500 p-3 rounded-lg">
+                            <i class="fas fa-list text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-blue-700 block">Manage Reports</span>
+                            <span class="text-blue-600 text-sm">View all crime reports</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-blue-400 group-hover:text-blue-600"></i>
+                </a>
+
+                <a href="{% url 'officer-list' %}" class="flex items-center justify-between p-4 bg-green-50 rounded-xl hover:bg-green-100 transition group border border-green-100">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-green-500 p-3 rounded-lg">
+                            <i class="fas fa-users text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-green-700 block">Manage Officers</span>
+                            <span class="text-green-600 text-sm">Add/edit officers</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-green-400 group-hover:text-green-600"></i>
+                </a>
+
+                <a href="{% url 'department' %}" class="flex items-center justify-between p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition group border border-purple-100">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-purple-500 p-3 rounded-lg">
+                            <i class="fas fa-building text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-purple-700 block">Departments</span>
+                            <span class="text-purple-600 text-sm">Manage departments</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-purple-400 group-hover:text-purple-600"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Top Keywords Cloud -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-tag text-indigo-600 mr-3"></i>
+                Top AI Keywords
+            </h2>
+            <div class="flex flex-wrap gap-2">
+                {% for keyword in top_keywords %}
+                <span class="bg-{{ keyword.color }}-100 text-{{ keyword.color }}-700 px-3 py-1.5 rounded-full text-sm border border-{{ keyword.color }}-200">
+                    {{ keyword.word }}
+                    <span class="text-xs ml-1 text-gray-500">({{ keyword.count }})</span>
+                </span>
+                {% empty %}
+                <p class="text-gray-500 text-sm">No keywords detected yet</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .transition {
+        transition: all 0.3s ease;
+    }
+    
+    .hover\:scale-105:hover {
+        transform: scale(1.05);
+    }
+    
+    /* Sparkline bar heights */
+    .bg-purple-100 {
+        transition: height 0.3s ease;
+    }
+</style>
+
+{% endblock %}

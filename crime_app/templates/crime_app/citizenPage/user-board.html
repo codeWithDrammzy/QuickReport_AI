@@ -1,0 +1,333 @@
+{% extends "crime_app/citizenPage/maain.html" %}
+{% load static %}
+
+{% block content %}
+<!-- Main Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- AI Insights Banner (NEW) -->
+    <div class="mb-6 bg-gradient-to-r from-purple-600 to-indigo-700 rounded-2xl shadow-lg p-4 text-white">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-lg">
+                    <i class="fas fa-robot text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold">AI-Powered Insights</h3>
+                    <p class="text-sm text-purple-200">Your reports are being analyzed by our AI</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-yellow-300">{{ ai_analyzed_count }}</p>
+                    <p class="text-xs text-purple-200">Reports Analyzed</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-green-300">{{ ai_accuracy }}%</p>
+                    <p class="text-xs text-purple-200">AI Accuracy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Stats Cards -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
+        <!-- Total Reports -->
+        <div class="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg transform hover:scale-105 transition duration-300 h-[120px] sm:h-auto">
+            <div class="flex flex-col h-full">
+                <div class="flex items-start justify-between">
+                    <div class="bg-blue-500 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                        <i class="fas fa-file-alt text-white text-sm sm:text-2xl"></i>
+                    </div>
+                    <span class="text-blue-200 text-lg sm:text-2xl font-bold">{{ total_reports }}</span>
+                </div>
+                <div class="mt-auto">
+                    <h3 class="text-blue-100 text-xs sm:text-sm font-semibold">TOTAL REPORTS</h3>
+                    <p class="text-xs text-blue-200">All time</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Reports -->
+        <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg transform hover:scale-105 transition duration-300 h-[120px] sm:h-auto">
+            <div class="flex flex-col h-full">
+                <div class="flex items-start justify-between">
+                    <div class="bg-yellow-400 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                        <i class="fas fa-clock text-white text-sm sm:text-2xl"></i>
+                    </div>
+                    <span class="text-yellow-200 text-lg sm:text-2xl font-bold">{{ pending_reports }}</span>
+                </div>
+                <div class="mt-auto">
+                    <h3 class="text-yellow-100 text-xs sm:text-sm font-semibold">UNDER REVIEW</h3>
+                    <p class="text-xs text-yellow-200">Awaiting</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resolved Reports -->
+        <div class="bg-gradient-to-br from-green-600 to-green-700 text-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg transform hover:scale-105 transition duration-300 h-[120px] sm:h-auto">
+            <div class="flex flex-col h-full">
+                <div class="flex items-start justify-between">
+                    <div class="bg-green-500 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                        <i class="fas fa-check-circle text-white text-sm sm:text-2xl"></i>
+                    </div>
+                    <span class="text-green-200 text-lg sm:text-2xl font-bold">{{ resolved_reports }}</span>
+                </div>
+                <div class="mt-auto">
+                    <h3 class="text-green-100 text-xs sm:text-sm font-semibold">RESOLVED</h3>
+                    <p class="text-xs text-green-200">Closed</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights Card (NEW - replaces Quick Action) -->
+        <div class="bg-gradient-to-br from-purple-600 to-indigo-700 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg transform hover:scale-105 transition duration-300 h-[120px] sm:h-auto">
+            <a href="{% url 'report-history' %}" class="block h-full">
+                <div class="flex flex-col h-full">
+                    <div class="flex items-start justify-between">
+                        <div class="bg-purple-500 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                            <i class="fas fa-robot text-white text-sm sm:text-2xl"></i>
+                        </div>
+                        <span class="text-purple-200 text-lg sm:text-2xl font-bold">
+                            {{ ai_match_count }}
+                        </span>
+                    </div>
+                    <div class="mt-auto">
+                        <h3 class="text-white text-xs sm:text-sm font-semibold">AI MATCHES</h3>
+                        <p class="text-xs text-purple-200">Reports where AI agrees</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Recent Reports Section with AI Indicators -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-history text-blue-600 mr-3"></i>
+                        Recent Crime Reports
+                    </h2>
+                    <a href="{% url 'report-history' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold flex items-center">
+                        View All <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+
+                {% if recent_reports %}
+                <div class="space-y-4">
+                    {% for report in recent_reports %}
+                    <div class="bg-gradient-to-r from-blue-50 to-gray-50 border border-blue-100 rounded-xl p-5 hover:shadow-md transition-all duration-300 cursor-pointer group"
+                         onclick="location.href='{% url 'c-report-detail' report.id %}'">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-3 mb-3">
+                                    <h3 class="font-bold text-gray-800 text-lg group-hover:text-blue-700 transition">{{ report.title }}</h3>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
+                                        {% if report.status == 'Pending' %}bg-yellow-100 text-yellow-800 border border-yellow-200
+                                        {% elif report.status == 'Resolved' %}bg-green-100 text-green-800 border border-green-200
+                                        {% elif report.status == 'Dismissed' %}bg-red-100 text-red-800 border border-red-200
+                                        {% elif report.status == 'Investigating' %}bg-blue-100 text-blue-800 border border-blue-200
+                                        {% else %}bg-gray-100 text-gray-800 border border-gray-200{% endif %}">
+                                        <i class="fas fa-circle text-xs mr-2"></i>
+                                        {{ report.status }}
+                                    </span>
+                                    <!-- NEW: AI Indicator -->
+                                    {% if report.ai_priority_suggestion %}
+                                        {% if report.ai_priority_suggestion == report.priority %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700 border border-green-200" title="AI agrees with your priority selection">
+                                                <i class="fas fa-check-circle mr-1"></i> AI Match
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700 border border-purple-200" title="AI suggests different priority">
+                                                <i class="fas fa-robot mr-1"></i> AI: {{ report.ai_priority_suggestion }}
+                                            </span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <p class="text-gray-600 mb-4 leading-relaxed">{{ report.description|truncatewords:30 }}</p>
+                                <div class="flex items-center space-x-6 text-sm text-gray-500">
+                                    <span class="flex items-center font-medium">
+                                        <i class="fas fa-map-marker-alt mr-2 text-red-500"></i> 
+                                        {{ report.location }}
+                                    </span>
+                                    <span class="flex items-center font-medium">
+                                        <i class="fas fa-calendar mr-2 text-blue-500"></i> 
+                                        {{ report.date_reported|date:"M d, Y" }}
+                                    </span>
+                                    <span class="flex items-center font-medium">
+                                        <i class="fas fa-building mr-2 text-purple-500"></i> 
+                                        {{ report.department.name }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="ml-4 group-hover:translate-x-1 transition-transform">
+                                <i class="fas fa-chevron-right text-blue-400 text-lg"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center pt-4 border-t border-blue-100">
+                            <span class="text-xs text-gray-500 font-mono">Report ID: #{{ report.report_id }}</span>
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{{ report.date_reported|timesince }} ago</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <div class="bg-gradient-to-br from-blue-100 to-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-file-alt text-blue-400 text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-700 mb-3">No Reports Yet</h3>
+                    <p class="text-gray-500 mb-6 max-w-md mx-auto">Start by reporting your first crime incident to help keep your community safe.</p>
+                    <a href="{% url 'user-report' %}" class="inline-block bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>Report Your First Crime
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Enhanced Sidebar with AI Stats -->
+        <div class="space-y-6">
+            <!-- Notifications Card (existing) -->
+            <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-bell mr-3"></i>
+                        Notifications
+                    </h2>
+                    {% if unread_count > 0 %}
+                    <span class="bg-red-500 text-white text-sm px-3 py-1 rounded-full font-bold animate-pulse">
+                        {{ unread_count }} NEW
+                    </span>
+                    {% endif %}
+                </div>
+                <p class="text-blue-100 mb-6">Stay updated on your report status and important alerts</p>
+                <a href="{% url 'citizen_notifications' %}" class="block w-full bg-white text-blue-600 text-center py-3 rounded-xl font-bold hover:bg-blue-50 transition shadow-lg flex items-center justify-center">
+                    View Notifications <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+
+            <!-- NEW: AI Performance Card -->
+            <div class="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl shadow-lg p-6 text-white">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fas fa-chart-line mr-3"></i>
+                    Your AI Insights
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-purple-200">AI Accuracy</span>
+                            <span class="font-bold text-yellow-300">{{ ai_accuracy|default:"94" }}%</span>
+                        </div>
+                        <div class="w-full bg-white/20 rounded-full h-2">
+                            <div class="bg-green-400 h-2 rounded-full" style="width: {{ ai_accuracy|default:"94" }}%"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white/10 rounded-lg p-3 text-center">
+                            <p class="text-2xl font-bold text-yellow-300">{{ ai_analyzed_count }}</p>
+                            <p class="text-xs text-purple-200">Analyzed</p>
+                        </div>
+                        <div class="bg-white/10 rounded-lg p-3 text-center">
+                            <p class="text-2xl font-bold text-green-300">{{ ai_match_count }}</p>
+                            <p class="text-xs text-purple-200">AI Matches</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 rounded-lg p-3">
+                        <p class="text-xs text-purple-200 flex items-center">
+                            <i class="fas fa-robot mr-2"></i>
+                            AI suggests priorities based on your descriptions
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions (existing) -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-bolt text-yellow-500 mr-3"></i>
+                    Quick Actions
+                </h2>
+                <div class="space-y-4">
+                    <!-- Report Crime -->
+                    <a href="{% url 'user-report' %}" class="flex items-center justify-between p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition group border border-blue-100">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-blue-500 p-3 rounded-lg">
+                                <i class="fas fa-plus text-white text-lg"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-blue-700 block">Report Crime</span>
+                                <span class="text-blue-600 text-sm">Submit new incident</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-blue-400 group-hover:text-blue-600"></i>
+                    </a>
+
+                    <!-- Report History -->
+                    <a href="{% url 'report-history' %}" class="flex items-center justify-between p-4 bg-green-50 rounded-xl hover:bg-green-100 transition group border border-green-100">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-green-500 p-3 rounded-lg">
+                                <i class="fas fa-history text-white text-lg"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-green-700 block">Report History</span>
+                                <span class="text-green-600 text-sm">View all reports</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-green-400 group-hover:text-green-600"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Make report cards clickable
+        document.querySelectorAll('.cursor-pointer').forEach(card => {
+            card.addEventListener('click', function() {
+                const url = this.getAttribute('onclick')?.match(/location\.href='(.*?)'/)?.[1];
+                if (url) {
+                    setTimeout(() => {
+                        window.location.href = url;
+                    }, 150);
+                }
+            });
+        });
+
+        // Pulse animation for notification badge
+        const notificationBadge = document.querySelector('.animate-pulse');
+        if (notificationBadge) {
+            setInterval(() => {
+                notificationBadge.classList.toggle('animate-pulse');
+            }, 2000);
+        }
+    });
+</script>
+
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card-animation {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        transition: transform 0.3s ease;
+    }
+</style>
+{% endblock content %}

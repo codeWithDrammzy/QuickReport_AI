@@ -1,0 +1,194 @@
+{% load static %}
+{% load crispy_forms_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | QuickReport Nigeria</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Custom styling for form */
+    .form-group {
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 0.25rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+    .invalid-feedback {
+      color: #dc2626;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+    }
+    .alert-danger {
+      background-color: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+    }
+    .alert-success {
+      background-color: #dcfce7;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+    }
+  </style>
+</head>
+<body class="relative font-sans bg-gray-100">
+
+  <!-- Background Image -->
+  <div class="absolute inset-0">
+    <img src="{% static 'images/police.jpg' %}" alt="Police Background"
+         class="w-full h-full object-cover opacity-70">
+    <div class="absolute inset-0 bg-blue-900/80"></div>
+  </div>
+
+  <!-- Login Container -->
+  <div class="relative z-10 flex justify-center items-center min-h-screen px-4 py-8">
+    <div class="bg-white/95 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-full max-w-md text-center border-t-4 border-yellow-400">
+      
+      <!-- Logo/Header -->
+      <div class="flex justify-center mb-4">
+        <div class="bg-blue-900 p-3 rounded-full">
+          <i class="fas fa-shield-alt text-yellow-400 text-2xl"></i>
+        </div>
+      </div>
+      
+      <h1 class="text-3xl font-bold text-blue-900 mb-1">QuickReport Nigeria</h1>
+      <p class="text-sm text-gray-500 mb-2">Nigeria Police Force</p>
+      
+      <div class="w-16 h-1 bg-yellow-400 mx-auto my-4 rounded-full"></div>
+
+      <h2 class="text-xl font-semibold text-yellow-500 mb-6">Secure Login</h2>
+
+      <!-- Display Messages -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Form - IMPORTANT: using email field name -->
+      <form method="POST" action="{% url 'my-login' %}" class="text-left">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Email Field (name="email" is CRITICAL) -->
+        <div class="form-group">
+          <label for="id_email">Email Address</label>
+          <input type="email" name="email" id="id_email" 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                 placeholder="Enter your email" required value="{{ form.email.value|default:'' }}">
+          {% if form.email.errors %}
+            <div class="invalid-feedback">
+              {% for error in form.email.errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group">
+          <label for="id_password">Password</label>
+          <input type="password" name="password" id="id_password" 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                 placeholder="Enter your password" required>
+          {% if form.password.errors %}
+            <div class="invalid-feedback">
+              {% for error in form.password.errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Hidden username field for Django (optional but safe) -->
+        <input type="hidden" name="username" id="id_username" value="">
+
+        <!-- Remember Me -->
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center">
+            <input type="checkbox" id="remember" name="remember" 
+                   class="h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-300 rounded">
+            <label for="remember" class="ml-2 block text-sm text-gray-700">Remember me</label>
+          </div>
+          <div class="text-sm">
+            <a href="#" class="text-yellow-400 hover:text-yellow-500 font-medium">Forgot password?</a>
+          </div>
+        </div>
+
+        <button type="submit"
+                class="w-full bg-yellow-400 text-blue-900 font-bold py-3 rounded-lg hover:bg-yellow-300 transition duration-300 flex items-center justify-center space-x-2">
+          <i class="fas fa-sign-in-alt"></i>
+          <span>Login</span>
+        </button>
+      </form>
+
+      <!-- Links -->
+      <div class="mt-6 text-sm text-gray-600">
+        <p>Don't have an account? 
+          <a href="{% url 'register' %}" class="text-yellow-400 hover:underline font-semibold">Register here</a>
+        </p>
+        <p class="mt-4">
+          <a href="{% url '' %}" class="text-blue-900 hover:text-yellow-400 transition flex items-center justify-center space-x-2">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Home</span>
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="absolute bottom-0 w-full text-center text-gray-300 text-xs py-3 bg-blue-900/70 backdrop-blur-md">
+    &copy; 2025 QuickReport Nigeria. All Rights Reserved.
+  </footer>
+
+  <!-- Optional: Add JavaScript to sync fields if needed -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const emailField = document.getElementById('id_email');
+      const hiddenUsername = document.getElementById('id_username');
+      
+      if (emailField && hiddenUsername) {
+        emailField.addEventListener('input', function() {
+          // Django's default authentication can use email as username
+          // This is just a backup
+          hiddenUsername.value = this.value;
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>

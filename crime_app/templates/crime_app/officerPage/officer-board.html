@@ -1,0 +1,483 @@
+{% extends "crime_app/officerPage/main.html" %}
+{% load static %}
+{% block content %}
+
+<!-- Officer Header with Welcome Animation -->
+<div class="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 p-6 text-white shadow-2xl">
+  <!-- Animated Background Elements -->
+  <div class="absolute inset-0 opacity-10">
+    <div class="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-yellow-400 blur-3xl animate-pulse"></div>
+    <div class="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-blue-400 blur-3xl animate-pulse animation-delay-2000"></div>
+  </div>
+  
+  <div class="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div class="flex items-center space-x-4">
+      <div class="relative">
+        <div class="bg-yellow-400 text-blue-900 p-4 rounded-2xl shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-300">
+          <i class="fas fa-shield-alt text-3xl"></i>
+        </div>
+        <div class="absolute -top-2 -right-2 h-4 w-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+      </div>
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl md:text-3xl font-bold tracking-tight">
+            {{ user.officer.department.name }}
+          </h1>
+          <span class="bg-green-500/20 text-green-300 text-xs px-3 py-1 rounded-full border border-green-400/30">
+            <i class="fas fa-circle text-[8px] mr-1 text-green-400 animate-pulse"></i>
+            Active Duty
+          </span>
+        </div>
+        <div class="flex items-center gap-2 mt-2">
+          <i class="fas fa-map-pin text-yellow-400 text-sm"></i>
+          <p class="text-blue-100 text-sm">{{ user.officer.department.location|default:"Headquarters" }}</p>
+          <span class="w-1 h-1 bg-blue-400 rounded-full mx-2"></span>
+          <i class="fas fa-clock text-yellow-400 text-sm"></i>
+          <p class="text-blue-100 text-sm">{{ current_time|date:"H:i" }} GMT</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Quick Stats Badge -->
+    <div class="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-5 py-3 rounded-2xl border border-white/20">
+      <div class="text-center">
+        <p class="text-2xl font-bold text-yellow-400">{{ total_reports }}</p>
+        <p class="text-xs text-blue-200">Total Cases</p>
+      </div>
+      <div class="w-px h-8 bg-white/20"></div>
+      <div class="text-center">
+        <p class="text-2xl font-bold text-green-400">{{ resolved_cases }}</p>
+        <p class="text-xs text-blue-200">Resolved</p>
+      </div>
+      <div class="w-px h-8 bg-white/20 hidden sm:block"></div>
+      <div class="text-center hidden sm:block">
+        <p class="text-2xl font-bold text-yellow-400">{{ pending_cases }}</p>
+        <p class="text-xs text-blue-200">Pending</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Single Combined Stats Row - Basic + AI Together -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <!-- Total Cases (Basic) -->
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-lg">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-clipboard-list text-2xl opacity-80"></i>
+            <span class="text-2xl font-bold">{{ total_reports }}</span>
+        </div>
+        <p class="text-sm font-medium">Total Cases</p>
+        <p class="text-xs text-blue-200 mt-1">All time</p>
+    </div>
+
+    <!-- Resolved (Basic) -->
+    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-5 text-white shadow-lg">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-check-circle text-2xl opacity-80"></i>
+            <span class="text-2xl font-bold">{{ resolved_cases }}</span>
+        </div>
+        <p class="text-sm font-medium">Resolved</p>
+        <p class="text-xs text-green-200 mt-1">{{ ai_accuracy }}% accuracy</p>
+    </div>
+
+    <!-- Emergency + Pending Combined (AI + Basic) -->
+    <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+        <div class="absolute top-0 right-0 bg-white/20 px-2 py-1 text-xs rounded-bl-lg">AI</div>
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-exclamation-triangle text-2xl opacity-80"></i>
+            <span class="text-2xl font-bold">{{ ai_emergency_count }}</span>
+        </div>
+        <p class="text-sm font-medium">Emergency</p>
+        <div class="flex justify-between text-xs text-red-200 mt-1">
+            <span>Pending: {{ pending_cases }}</span>
+            <span>⚠️ Immediate</span>
+        </div>
+    </div>
+
+    <!-- High Priority + Keywords Combined (AI) -->
+    <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+        <div class="absolute top-0 right-0 bg-white/20 px-2 py-1 text-xs rounded-bl-lg">AI</div>
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-arrow-up text-2xl opacity-80"></i>
+            <span class="text-2xl font-bold">{{ ai_high_count }}</span>
+        </div>
+        <p class="text-sm font-medium">High Priority</p>
+        <div class="flex flex-wrap gap-1 mt-2">
+            {% for keyword in top_keywords|slice:":3" %}
+            <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">{{ keyword.word }}</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <!-- Performance Chart -->
+  <div class="lg:col-span-2 bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-bold text-gray-800 flex items-center">
+        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mr-3">
+          <i class="fas fa-chart-line text-blue-600"></i>
+        </div>
+        Case Performance
+      </h2>
+      <span class="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded-full">Last 7 Days</span>
+    </div>
+    
+    <div class="space-y-4">
+      {% for day_data in cases_by_day %}
+      <div>
+        <div class="flex justify-between text-sm text-gray-600 mb-1">
+          <span>{{ day_data.day }}</span>
+          <span class="font-semibold text-blue-600">{{ day_data.count }} cases</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+          {% with max_count=cases_by_day|dictsort:"count"|last %}
+          <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-1000" 
+               style="width: {% if max_count.count > 0 %}{% widthratio day_data.count max_count.count 100 %}{% else %}0{% endif %}%"></div>
+          {% endwith %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center py-8 text-gray-500">
+        <i class="fas fa-chart-line text-3xl mb-2"></i>
+        <p>No case data available for this week</p>
+      </div>
+      {% endfor %}
+    </div>
+    
+    <div class="mt-6 pt-4 border-t border-gray-100">
+      <div class="flex items-center justify-between text-sm">
+        <span class="text-gray-600">
+          <i class="fas fa-arrow-up text-green-500 mr-1"></i> 
+          {{ percent_change|default:"0" }}% vs last week
+        </span>
+        <span class="text-gray-900 font-semibold">Total: {{ total_this_week|default:"0" }} cases</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Case Distribution -->
+  <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+      <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mr-3">
+        <i class="fas fa-chart-pie text-purple-600"></i>
+      </div>
+      Case Distribution
+    </h2>
+    
+    <div class="space-y-4">
+      <div>
+        <div class="flex justify-between text-sm mb-1">
+          <span class="text-gray-600">Resolved</span>
+          <span class="font-semibold text-green-600">{{ resolved_cases }} cases</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+          <div class="bg-green-500 h-2.5 rounded-full" style="width: {% widthratio resolved_cases total_reports 100 %}%"></div>
+        </div>
+      </div>
+      <div>
+        <div class="flex justify-between text-sm mb-1">
+          <span class="text-gray-600">Investigating</span>
+          <span class="font-semibold text-blue-600">{{ investigating_cases }} cases</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+          <div class="bg-blue-500 h-2.5 rounded-full" style="width: {% widthratio investigating_cases total_reports 100 %}%"></div>
+        </div>
+      </div>
+      <div>
+        <div class="flex justify-between text-sm mb-1">
+          <span class="text-gray-600">Pending</span>
+          <span class="font-semibold text-yellow-600">{{ pending_cases }} cases</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+          <div class="bg-yellow-500 h-2.5 rounded-full" style="width: {% widthratio pending_cases total_reports 100 %}%"></div>
+        </div>
+      </div>
+      <div>
+        <div class="flex justify-between text-sm mb-1">
+          <span class="text-gray-600">Dismissed</span>
+          <span class="font-semibold text-red-600">{{ dismissed_cases }} cases</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+          <div class="bg-red-500 h-2.5 rounded-full" style="width: {% widthratio dismissed_cases total_reports 100 %}%"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-6 pt-4 border-t border-gray-100">
+      <div class="text-center">
+        <p class="text-3xl font-bold text-gray-800">{{ total_reports }}</p>
+        <p class="text-sm text-gray-500">Total Cases</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Reports Section with AI Column -->
+<section class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-8">
+  <!-- Section Header with Filter Tabs -->
+  <div class="p-6 border-b border-gray-100">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center">
+        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mr-3">
+          <i class="fas fa-list text-blue-600"></i>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800">Recent Cases</h2>
+        <span class="ml-3 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+          AI-enhanced
+        </span>
+      </div>
+      
+      <!-- Status Filter Tabs -->
+      <div class="flex items-center space-x-2 overflow-x-auto hide-scrollbar pb-1">
+        <a href="?status=all" 
+           class="px-4 py-2 {% if request.GET.status == 'all' or not request.GET.status %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} rounded-lg text-sm font-medium whitespace-nowrap transition">
+          All ({{ total_reports }})
+        </a>
+        <a href="?status=Pending" 
+           class="px-4 py-2 {% if request.GET.status == 'Pending' %}bg-yellow-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} rounded-lg text-sm font-medium whitespace-nowrap transition">
+          <i class="fas fa-clock mr-1"></i>Pending ({{ pending_cases }})
+        </a>
+        <a href="?status=Investigating" 
+           class="px-4 py-2 {% if request.GET.status == 'Investigating' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} rounded-lg text-sm font-medium whitespace-nowrap transition">
+          <i class="fas fa-search mr-1"></i>Investigating ({{ investigating_cases }})
+        </a>
+        <a href="?status=Resolved" 
+           class="px-4 py-2 {% if request.GET.status == 'Resolved' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} rounded-lg text-sm font-medium whitespace-nowrap transition">
+          <i class="fas fa-check-circle mr-1"></i>Resolved ({{ resolved_cases }})
+        </a>
+        <a href="?status=Dismissed" 
+           class="px-4 py-2 {% if request.GET.status == 'Dismissed' %}bg-red-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} rounded-lg text-sm font-medium whitespace-nowrap transition">
+          <i class="fas fa-times-circle mr-1"></i>Dismissed ({{ dismissed_cases }})
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desktop Table View with AI Column -->
+  <div class="hidden md:block overflow-x-auto">
+    <table class="w-full">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Case ID</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Crime Type</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Location</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Priority</th>
+          <!-- NEW AI SUGGESTION COLUMN -->
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">AI Suggestion</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+          <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for report in recent_reports %}
+        <tr class="hover:bg-blue-50 transition-colors group">
+          <td class="px-6 py-4">
+            <span class="font-mono font-medium text-blue-600">{{ report.report_id }}</span>
+          </td>
+          <td class="px-6 py-4">
+            <div class="flex items-center">
+              <div class="w-2 h-2 rounded-full 
+                {% if report.incident_type == 'Robbery' %}bg-red-500
+                {% elif report.incident_type == 'Assault' %}bg-orange-500
+                {% elif report.incident_type == 'Theft' %}bg-yellow-500
+                {% else %}bg-blue-500{% endif %} mr-2"></div>
+              <span class="text-sm text-gray-700">{{ report.incident_type }}</span>
+            </div>
+          </td>
+          <td class="px-6 py-4 text-sm text-gray-600">{{ report.location|truncatechars:20 }}</td>
+          <td class="px-6 py-4">
+            <span class="px-2 py-1 text-xs rounded-full font-medium
+              {% if report.priority == 'Emergency' %}bg-red-100 text-red-700 border border-red-200
+              {% elif report.priority == 'High' %}bg-orange-100 text-orange-700 border border-orange-200
+              {% elif report.priority == 'Medium' %}bg-yellow-100 text-yellow-700 border border-yellow-200
+              {% elif report.priority == 'Low' %}bg-green-100 text-green-700 border border-green-200
+              {% else %}bg-gray-100 text-gray-700 border border-gray-200{% endif %}">
+              {{ report.priority|default:"Medium" }}
+            </span>
+          </td>
+          <!-- NEW AI SUGGESTION COLUMN DATA -->
+          <td class="px-6 py-4">
+            {% if report.ai_priority_suggestion %}
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <span class="text-xs font-medium 
+                            {% if report.ai_priority_suggestion == 'Emergency' %}text-red-600
+                            {% elif report.ai_priority_suggestion == 'High' %}text-orange-600
+                            {% elif report.ai_priority_suggestion == 'Medium' %}text-yellow-600
+                            {% else %}text-green-600{% endif %}">
+                            {{ report.ai_priority_suggestion }}
+                        </span>
+                        <span class="ml-1 text-xs text-gray-400">({{ report.ai_priority_confidence }}%)</span>
+                    </div>
+                    {% if report.ai_priority_suggestion != report.priority %}
+                        <div class="flex items-center mt-1">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-xs mr-1"></i>
+                            <span class="text-xs text-yellow-600">Different from user</span>
+                        </div>
+                    {% else %}
+                        <div class="flex items-center mt-1">
+                            <i class="fas fa-check-circle text-green-500 text-xs mr-1"></i>
+                            <span class="text-xs text-green-600">Matches user</span>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <span class="text-xs text-gray-400">No AI data</span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-4">
+            <a href="?status={{ report.status }}" 
+               class="px-2 py-1 text-xs rounded-full font-medium inline-flex items-center
+                {% if report.status == 'Resolved' %}bg-green-100 text-green-700 border border-green-200 hover:bg-green-200
+                {% elif report.status == 'Pending' %}bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200
+                {% elif report.status == 'Investigating' %}bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-200
+                {% elif report.status == 'Dismissed' %}bg-red-100 text-red-700 border border-red-200 hover:bg-red-200
+                {% else %}bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200{% endif %} 
+                transition-colors">
+              {{ report.status }}
+            </a>
+          </td>
+          <td class="px-6 py-4 text-sm text-gray-500">{{ report.date_reported|date:"M d, Y" }}</td>
+          <td class="px-6 py-4">
+            <div class="flex items-center justify-center space-x-2">
+              <a href="{% url 'report-detail' report.id %}" 
+                 class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition"
+                 title="View Details">
+                <i class="fas fa-eye"></i>
+              </a>
+             
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="px-6 py-12 text-center">
+            <div class="flex flex-col items-center">
+              <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-inbox text-3xl text-gray-400"></i>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-700 mb-1">No Cases Found</h3>
+              <p class="text-sm text-gray-500 mb-4">No cases match the selected filter</p>
+              <a href="?" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition">
+                <i class="fas fa-undo-alt mr-2"></i>Clear Filter
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mobile Card View with AI Indicator -->
+  <div class="md:hidden divide-y divide-gray-100">
+    {% for report in recent_reports %}
+    <div class="p-4 hover:bg-blue-50 transition-colors">
+      <div class="flex items-start justify-between mb-2">
+        <div>
+          <span class="font-mono font-medium text-blue-600 text-sm">{{ report.report_id }}</span>
+          <h3 class="font-semibold text-gray-800 mt-1">{{ report.incident_type }}</h3>
+        </div>
+        <span class="px-2 py-1 text-xs rounded-full font-medium
+          {% if report.priority == 'Emergency' %}bg-red-100 text-red-700
+          {% elif report.priority == 'High' %}bg-orange-100 text-orange-700
+          {% elif report.priority == 'Medium' %}bg-yellow-100 text-yellow-700
+          {% elif report.priority == 'Low' %}bg-green-100 text-green-700
+          {% else %}bg-gray-100 text-gray-700{% endif %}">
+          {{ report.priority|default:"Medium" }}
+        </span>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
+        <div class="flex items-center text-gray-600">
+          <i class="fas fa-map-marker-alt mr-1 text-gray-400 w-4"></i>
+          {{ report.location|truncatechars:15 }}
+        </div>
+        <div class="flex items-center text-gray-600">
+          <i class="fas fa-calendar mr-1 text-gray-400 w-4"></i>
+          {{ report.date_reported|date:"M d" }}
+        </div>
+      </div>
+      
+      <!-- Mobile AI Indicator -->
+      <div class="mb-2 flex items-center bg-purple-50 p-2 rounded-lg">
+        <i class="fas fa-robot text-xs text-purple-600 mr-2"></i>
+        {% if report.ai_priority_suggestion %}
+          <span class="text-xs {% if report.ai_priority_suggestion == report.priority %}text-green-600{% else %}text-orange-600{% endif %} font-medium">
+            AI suggests {{ report.ai_priority_suggestion }} ({{ report.ai_priority_confidence }}% confidence)
+          </span>
+          {% if report.ai_priority_suggestion != report.priority %}
+            <i class="fas fa-exclamation-triangle text-yellow-500 text-xs ml-2" title="AI suggests different priority"></i>
+          {% endif %}
+        {% else %}
+          <span class="text-xs text-gray-400">No AI analysis available</span>
+        {% endif %}
+      </div>
+      
+      <div class="flex items-center justify-between">
+        <a href="?status={{ report.status }}" 
+           class="px-2 py-1 text-xs rounded-full font-medium
+            {% if report.status == 'Resolved' %}bg-green-100 text-green-700
+            {% elif report.status == 'Pending' %}bg-yellow-100 text-yellow-700
+            {% elif report.status == 'Investigating' %}bg-blue-100 text-blue-700
+            {% elif report.status == 'Dismissed' %}bg-red-100 text-red-700
+            {% else %}bg-gray-100 text-gray-700{% endif %}">
+          {{ report.status }}
+        </a>
+        <div class="flex space-x-2">
+          <a href="{% url 'report-detail' report.id %}" class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg">
+            <i class="fas fa-eye"></i>
+          </a>
+          <a href="{% url 'update-report-status' report.id %}" class="p-2 text-green-600 hover:bg-green-100 rounded-lg">
+            <i class="fas fa-edit"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="p-8 text-center">
+      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i class="fas fa-inbox text-2xl text-gray-400"></i>
+      </div>
+      <p class="text-gray-600 text-sm">No cases found</p>
+      <a href="?" class="mt-3 inline-block text-blue-600 text-sm hover:underline">Clear filter</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+
+<!-- Custom Animations -->
+<style>
+  @keyframes blob {
+    0%, 100% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+  }
+  
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+  
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Mobile AI indicator styling */
+  .bg-purple-50 {
+    background-color: #faf5ff;
+  }
+</style>
+
+{% endblock %}

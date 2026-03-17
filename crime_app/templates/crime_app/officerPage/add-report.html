@@ -1,0 +1,510 @@
+{% extends "crime_app/officerPage/main.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<!-- Page Container -->
+<div class="min-h-screen bg-gray-50 p-3 md:p-6">
+  <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-blue-700 to-blue-800 text-white px-4 md:px-6 py-4 md:py-5">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+          <h1 class="text-xl md:text-3xl font-bold tracking-tight">Crime Report Management</h1>
+          <p class="text-blue-100 text-sm md:text-base mt-1">Manage and submit crime reports efficiently</p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button id="showTableBtn"
+            class="bg-white/20 hover:bg-white/30 text-white px-4 md:px-5 py-2 md:py-2.5 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center space-x-2 border border-white/30 text-sm md:text-base">
+            <i class="fas fa-table text-sm"></i>
+            <span>View Reports</span>
+          </button>
+          <button id="showFormBtn"
+            class="bg-white text-blue-700 hover:bg-blue-50 px-4 md:px-5 py-2 md:py-2.5 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center space-x-2 font-semibold text-sm md:text-base">
+            <i class="fas fa-plus-circle text-sm"></i>
+            <span>New Report</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Table Section -->
+    <div id="reportTableSection" class="p-4 md:p-6">
+      <div class="mb-4 md:mb-6">
+        <h2 class="text-lg md:text-xl font-semibold text-gray-800 mb-1">All Crime Reports</h2>
+        <p class="text-gray-600 text-xs md:text-sm">Overview of all submitted crime reports in the system</p>
+      </div>
+
+      <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <!-- Mobile Card View -->
+        <div class="block md:hidden divide-y divide-gray-200">
+          {% for report in reports %}
+          <div class="p-4 hover:bg-gray-50 transition-colors">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <span class="font-mono text-blue-600 font-medium text-sm">#{{ report.report_id }}</span>
+                <h3 class="font-semibold text-gray-900 mt-1">{{ report.title|truncatechars:30 }}</h3>
+              </div>
+              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                {% if report.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                {% elif report.status == 'Resolved' %}bg-green-100 text-green-800
+                {% elif report.status == 'Investigating' %}bg-blue-100 text-blue-800
+                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ report.status }}
+              </span>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
+              <div class="flex items-center text-gray-600">
+                <i class="fas fa-building mr-1 text-gray-400 w-4"></i>
+                {{ report.department.name|truncatechars:15 }}
+              </div>
+              <div class="flex items-center text-gray-600">
+                <i class="fas fa-calendar mr-1 text-gray-400 w-4"></i>
+                {{ report.date_reported|date:"M d, Y" }}
+              </div>
+            </div>
+            
+            <div class="flex justify-end">
+              <a href="{% url 'report-detail' report.id %}"
+                class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors">
+                <i class="fas fa-eye mr-1"></i>
+                View Details
+              </a>
+            </div>
+          </div>
+          {% empty %}
+          <div class="p-8 text-center">
+            <div class="flex flex-col items-center justify-center">
+              <i class="fas fa-inbox text-3xl text-gray-300 mb-3"></i>
+              <p class="text-gray-600">No reports available</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-4 py-3 font-semibold text-gray-700 text-left">Report ID</th>
+                <th class="px-4 py-3 font-semibold text-gray-700 text-left">Title</th>
+                <th class="px-4 py-3 font-semibold text-gray-700 text-left">Department</th>
+                <th class="px-4 py-3 font-semibold text-gray-700 text-left">Status</th>
+                <th class="px-4 py-3 font-semibold text-gray-700 text-left">Date Reported</th>
+                <th class="px-4 py-3 font-semibold text-gray-700 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              {% for report in reports %}
+              <tr class="hover:bg-gray-50 transition-colors duration-150">
+                <td class="px-4 py-3">
+                  <span class="font-mono text-blue-600 font-medium">#{{ report.report_id }}</span>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="font-medium text-gray-900">{{ report.title|truncatechars:30 }}</div>
+                </td>
+                <td class="px-4 py-3 text-gray-600">{{ report.department.name|truncatechars:20 }}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                    {% if report.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                    {% elif report.status == 'Resolved' %}bg-green-100 text-green-800
+                    {% elif report.status == 'Investigating' %}bg-blue-100 text-blue-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ report.status }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-gray-500">{{ report.date_reported|date:"M d, Y" }}</td>
+                <td class="px-4 py-3">
+                  <div class="flex justify-center space-x-2">
+                    <a href="{% url 'report-detail' report.id %}"
+                      class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors">
+                      <i class="fas fa-eye mr-1"></i>
+                      View
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                  <div class="flex flex-col items-center justify-center">
+                    <i class="fas fa-inbox text-3xl text-gray-300 mb-3"></i>
+                    <p class="text-gray-600">No reports available</p>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Form Section -->
+    <div id="reportFormSection" class="hidden p-4 md:p-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="mb-6 md:mb-8 text-center">
+          <h2 class="text-xl md:text-3xl font-bold text-gray-900 mb-2">Submit New Crime Report</h2>
+          <p class="text-sm md:text-base text-gray-600 max-w-2xl mx-auto">Complete all required fields to submit a detailed crime report.</p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-4 md:space-y-6">
+          {% csrf_token %}
+          
+          <!-- Basic Information Card -->
+          <div class="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
+            <div class="flex items-center mb-4 md:mb-6">
+              <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                <i class="fas fa-info-circle text-blue-600"></i>
+              </div>
+              <h3 class="text-lg md:text-xl font-semibold text-gray-900">Basic Information</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              {% for field in form %}
+                {% if field.name != 'photo_file' and field.name != 'video_file' and field.name != 'audio_file' %}
+                  <div class="space-y-1 md:space-y-2">
+                    <label for="{{ field.id_for_label }}" class="block text-xs md:text-sm font-medium text-gray-700">
+                      {{ field.label }}
+                      {% if field.field.required %}<span class="text-red-500 ml-1">*</span>{% endif %}
+                    </label>
+                    
+                    {% if field.name == "department" or field.name == "incident_type" or field.name == "priority" %}
+                      <select name="{{ field.name }}" 
+                              id="{{ field.id_for_label }}" 
+                              class="w-full border border-gray-300 rounded-lg px-3 md:px-4 py-2 md:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                              {% if field.field.required %}required{% endif %}>
+                        <option value="">Select {{ field.label }}</option>
+                        {% for choice in field.field.choices %}
+                          {% if choice.0 != '' %}
+                            <option value="{{ choice.0 }}" {% if field.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                              {{ choice.1 }}
+                            </option>
+                          {% endif %}
+                        {% endfor %}
+                      </select>
+                    {% elif field.name == "description" %}
+                      <textarea name="{{ field.name }}" 
+                                id="{{ field.id_for_label }}" 
+                                rows="3"
+                                class="w-full border border-gray-300 rounded-lg px-3 md:px-4 py-2 md:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                                placeholder="Enter detailed description of the incident"
+                                {% if field.field.required %}required{% endif %}>{{ field.value|default:'' }}</textarea>
+                    {% else %}
+                      <input type="{{ field.field.widget.input_type }}" 
+                            name="{{ field.name }}" 
+                            id="{{ field.id_for_label }}" 
+                            class="w-full border border-gray-300 rounded-lg px-3 md:px-4 py-2 md:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                            value="{{ field.value|default:'' }}"
+                            placeholder="Enter {{ field.label|lower }}"
+                            {% if field.field.required %}required{% endif %}>
+                    {% endif %}
+                    
+                    {% if field.help_text %}
+                      <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% for error in field.errors %}
+                      <p class="text-xs text-red-500 mt-1">{{ error }}</p>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Evidence Collection Card -->
+          <div class="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
+            <div class="flex items-center mb-4 md:mb-6">
+              <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                <i class="fas fa-camera text-blue-600"></i>
+              </div>
+              <h3 class="text-lg md:text-xl font-semibold text-gray-900">Evidence Collection</h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+              <!-- Photo Evidence -->
+              <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 md:p-5 text-center hover:border-blue-400 transition-colors">
+                <div class="bg-blue-50 p-2 md:p-3 rounded-full inline-flex mb-3">
+                  <i class="fas fa-camera text-blue-600 text-lg md:text-xl"></i>
+                </div>
+                <h4 class="font-semibold text-gray-800 text-sm md:text-base mb-1">Photo Evidence</h4>
+                <p class="text-xs text-gray-600 mb-3">Capture or upload photos</p>
+                
+                <video id="cameraPreview" class="mx-auto rounded-lg hidden w-full mb-3 max-h-32 md:max-h-40" autoplay muted></video>
+                <div id="photoPreviewContainer" class="my-2"></div>
+
+                <div class="space-y-2">
+                  <button type="button" id="openCameraBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors text-xs font-medium">
+                    <i class="fas fa-camera mr-1"></i>Open Camera
+                  </button>
+                  <button type="button" id="takePhotoBtn"
+                    class="hidden w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors text-xs font-medium">
+                    <i class="fas fa-camera-retro mr-1"></i>Capture
+                  </button>
+                </div>
+                <input type="file" name="photo_file" id="photoFileInput" accept="image/*" class="hidden" />
+              </div>
+
+              <!-- Video Evidence -->
+              <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 md:p-5 text-center hover:border-blue-400 transition-colors">
+                <div class="bg-blue-50 p-2 md:p-3 rounded-full inline-flex mb-3">
+                  <i class="fas fa-video text-blue-600 text-lg md:text-xl"></i>
+                </div>
+                <h4 class="font-semibold text-gray-800 text-sm md:text-base mb-1">Video Recording</h4>
+                <p class="text-xs text-gray-600 mb-3">Record or upload video</p>
+                
+                <video id="videoLivePreview" class="mx-auto rounded-lg hidden w-full mb-3 max-h-32 md:max-h-40" autoplay muted></video>
+                <video id="videoPreview" class="mx-auto rounded-lg hidden w-full mb-3 max-h-32 md:max-h-40" controls></video>
+                
+                <div class="space-y-2">
+                  <button type="button" id="startVideoBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors text-xs font-medium">
+                    <i class="fas fa-record-vinyl mr-1"></i>Start Recording
+                  </button>
+                  <button type="button" id="stopVideoBtn"
+                    class="hidden w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors text-xs font-medium">
+                    <i class="fas fa-stop mr-1"></i>Stop
+                  </button>
+                </div>
+                <input type="file" name="video_file" id="videoFileInput" accept="video/*" class="hidden" />
+              </div>
+
+              <!-- Audio Evidence -->
+              <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 md:p-5 text-center hover:border-blue-400 transition-colors">
+                <div class="bg-blue-50 p-2 md:p-3 rounded-full inline-flex mb-3">
+                  <i class="fas fa-microphone text-blue-600 text-lg md:text-xl"></i>
+                </div>
+                <h4 class="font-semibold text-gray-800 text-sm md:text-base mb-1">Audio Recording</h4>
+                <p class="text-xs text-gray-600 mb-3">Record or upload audio</p>
+                
+                <audio id="audioPreview" class="mx-auto hidden w-full mb-3" controls></audio>
+                
+                <div class="space-y-2">
+                  <button type="button" id="startAudioBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors text-xs font-medium">
+                    <i class="fas fa-microphone mr-1"></i>Start Recording
+                  </button>
+                  <button type="button" id="stopAudioBtn"
+                    class="hidden w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors text-xs font-medium">
+                    <i class="fas fa-stop mr-1"></i>Stop
+                  </button>
+                </div>
+                <input type="file" name="audio_file" id="audioFileInput" accept="audio/*" class="hidden" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex flex-col sm:flex-row justify-center gap-3 pt-4 border-t border-gray-200">
+            <button type="submit"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-lg shadow-sm transition-all duration-200 font-semibold flex items-center justify-center space-x-2 text-sm md:text-base">
+              <i class="fas fa-paper-plane"></i>
+              <span>Submit Report</span>
+            </button>
+            <button type="button" id="cancelFormBtn"
+              class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 md:px-8 py-2.5 md:py-3 rounded-lg shadow-sm transition-all duration-200 font-semibold flex items-center justify-center space-x-2 text-sm md:text-base">
+              <i class="fas fa-times"></i>
+              <span>Cancel</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Section Toggle
+    const formSection = document.getElementById('reportFormSection');
+    const tableSection = document.getElementById('reportTableSection');
+    const showFormBtn = document.getElementById('showFormBtn');
+    const showTableBtn = document.getElementById('showTableBtn');
+    const cancelFormBtn = document.getElementById('cancelFormBtn');
+
+    showFormBtn.onclick = () => {
+      formSection.classList.remove('hidden');
+      tableSection.classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    showTableBtn.onclick = () => {
+      formSection.classList.add('hidden');
+      tableSection.classList.remove('hidden');
+    };
+
+    cancelFormBtn.onclick = () => showTableBtn.click();
+
+    // Camera Functionality
+    const openCameraBtn = document.getElementById('openCameraBtn');
+    const takePhotoBtn = document.getElementById('takePhotoBtn');
+    const cameraPreview = document.getElementById('cameraPreview');
+    const photoCanvas = document.createElement('canvas');
+    const photoFileInput = document.getElementById('photoFileInput');
+    const photoPreviewContainer = document.getElementById('photoPreviewContainer');
+    let cameraStream;
+
+    openCameraBtn.onclick = async () => {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { width: 640, height: 480 } 
+        });
+        cameraPreview.srcObject = cameraStream;
+        cameraPreview.classList.remove('hidden');
+        takePhotoBtn.classList.remove('hidden');
+        openCameraBtn.classList.add('hidden');
+      } catch (error) {
+        alert('Unable to access camera. Please check permissions.');
+      }
+    };
+
+    takePhotoBtn.onclick = () => {
+      const context = photoCanvas.getContext('2d');
+      photoCanvas.width = cameraPreview.videoWidth;
+      photoCanvas.height = cameraPreview.videoHeight;
+      context.drawImage(cameraPreview, 0, 0);
+      
+      photoCanvas.toBlob(blob => {
+        const file = new File([blob], `crime_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        photoFileInput.files = dataTransfer.files;
+
+        // Create preview
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.classList.add('mx-auto', 'rounded-lg', 'mt-3', 'max-h-32', 'border', 'border-gray-200');
+        photoPreviewContainer.innerHTML = '';
+        photoPreviewContainer.appendChild(img);
+
+        // Stop camera
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraPreview.classList.add('hidden');
+        takePhotoBtn.classList.add('hidden');
+        openCameraBtn.classList.remove('hidden');
+      }, 'image/jpeg', 0.9);
+    };
+
+    // Video Recording
+    const startVideoBtn = document.getElementById('startVideoBtn');
+    const stopVideoBtn = document.getElementById('stopVideoBtn');
+    const videoLivePreview = document.getElementById('videoLivePreview');
+    const videoPreview = document.getElementById('videoPreview');
+    const videoFileInput = document.getElementById('videoFileInput');
+    let videoRecorder, videoStream, videoChunks = [];
+
+    startVideoBtn.onclick = async () => {
+      try {
+        videoStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { width: 640, height: 480 }, 
+          audio: true 
+        });
+        
+        videoLivePreview.srcObject = videoStream;
+        videoLivePreview.classList.remove('hidden');
+        videoPreview.classList.add('hidden');
+        
+        const options = { mimeType: 'video/webm' };
+        videoRecorder = new MediaRecorder(videoStream, options);
+        videoChunks = [];
+
+        videoRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            videoChunks.push(event.data);
+          }
+        };
+
+        videoRecorder.onstop = () => {
+          const blob = new Blob(videoChunks, { type: 'video/webm' });
+          const file = new File([blob], `crime_video_${Date.now()}.webm`, { type: blob.type });
+          
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          videoFileInput.files = dt.files;
+
+          videoPreview.src = URL.createObjectURL(blob);
+          videoPreview.classList.remove('hidden');
+          videoLivePreview.classList.add('hidden');
+          
+          videoStream.getTracks().forEach(track => track.stop());
+        };
+
+        videoRecorder.start(1000);
+        
+        startVideoBtn.classList.add('hidden');
+        stopVideoBtn.classList.remove('hidden');
+        
+      } catch (error) {
+        alert('Unable to access camera/microphone.');
+      }
+    };
+
+    stopVideoBtn.onclick = () => {
+      if (videoRecorder && videoRecorder.state === 'recording') {
+        videoRecorder.stop();
+        startVideoBtn.classList.remove('hidden');
+        stopVideoBtn.classList.add('hidden');
+      }
+    };
+
+    // Audio Recording
+    const startAudioBtn = document.getElementById('startAudioBtn');
+    const stopAudioBtn = document.getElementById('stopAudioBtn');
+    const audioPreview = document.getElementById('audioPreview');
+    const audioFileInput = document.getElementById('audioFileInput');
+    let audioRecorder, audioStream, audioChunks = [];
+
+    startAudioBtn.onclick = async () => {
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const options = { mimeType: 'audio/webm' };
+        audioRecorder = new MediaRecorder(audioStream, options);
+        audioChunks = [];
+
+        audioRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        audioRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          const file = new File([blob], `crime_audio_${Date.now()}.webm`, { type: blob.type });
+          
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          audioFileInput.files = dt.files;
+
+          audioPreview.src = URL.createObjectURL(blob);
+          audioPreview.classList.remove('hidden');
+          
+          audioStream.getTracks().forEach(track => track.stop());
+        };
+
+        audioRecorder.start(1000);
+        
+        startAudioBtn.classList.add('hidden');
+        stopAudioBtn.classList.remove('hidden');
+        
+      } catch (error) {
+        alert('Unable to access microphone.');
+      }
+    };
+
+    stopAudioBtn.onclick = () => {
+      if (audioRecorder && audioRecorder.state === 'recording') {
+        audioRecorder.stop();
+        startAudioBtn.classList.remove('hidden');
+        stopAudioBtn.classList.add('hidden');
+      }
+    };
+  });
+</script>
+
+{% endblock %}

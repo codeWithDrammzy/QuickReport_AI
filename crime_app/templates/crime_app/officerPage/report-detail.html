@@ -1,0 +1,432 @@
+{% extends "crime_app/officerPage/main.html" %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header with Back Button -->
+        <div class="mb-6">
+            <a href="{% url 'officer-board' %}" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold mb-4">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Crime Report Details</h1>
+                    <p class="text-gray-600 mt-2">Complete investigation information</p>
+                </div>
+                <div class="text-right">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                        {% if crime.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                        {% elif crime.status == 'Resolved' %}bg-green-100 text-green-800
+                        {% elif crime.status == 'Dismissed' %}bg-red-100 text-red-800
+                        {% elif crime.status == 'Investigating' %}bg-blue-100 text-blue-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {% if crime.status == 'Pending' %}<i class="fas fa-clock mr-1"></i>
+                        {% elif crime.status == 'Resolved' %}<i class="fas fa-check mr-1"></i>
+                        {% elif crime.status == 'Dismissed' %}<i class="fas fa-times mr-1"></i>
+                        {% elif crime.status == 'Investigating' %}<i class="fas fa-search mr-1"></i>
+                        {% endif %}
+                        {{ crime.status }}
+                    </span>
+                    <p class="text-xs text-gray-500 mt-1">Report ID: {{ crime.report_id }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Report Details -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Reporter Information Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">👤 Reporter Information</h2>
+                    
+                    {% if crime.reporter %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex items-center space-x-4">
+                            {% if crime.reporter.officer.profile_picture %}
+                                <img src="{{ crime.reporter.officer.profile_picture.url }}" 
+                                    alt="Officer Photo" 
+                                    class="w-16 h-16 rounded-full border-2 border-yellow-400 object-cover">
+                            {% else %}
+                                <img src="{% static 'images/dummy_user.png' %}" 
+                                    alt="Officer" 
+                                    class="w-16 h-16 rounded-full border-2 border-yellow-400">
+                            {% endif %}
+                            <div>
+                                <p class="font-semibold text-gray-800">{{ crime.reporter.get_full_name|default:crime.reporter.username }}</p>
+                                <p class="text-sm text-gray-600">Police Officer</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <p class="text-gray-700">
+                                <i class="fas fa-envelope text-blue-500 mr-2"></i>
+                                <strong>Email:</strong> {{ crime.reporter.email|default:"Not provided" }}
+                            </p>
+                            <p class="text-gray-700">
+                                <i class="fas fa-phone text-blue-500 mr-2"></i>
+                                <strong>Phone:</strong> {{ crime.reporter.phone|default:"Not provided" }}
+                            </p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center justify-center py-4">
+                        <i class="fas fa-user-secret text-2xl text-gray-400 mr-3"></i>
+                        <p class="italic text-gray-500 text-lg">Anonymous Reporter</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Basic Information Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📋 Incident Information</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Incident Type</h3>
+                            <p class="text-gray-900">{{ crime.incident_type|default:"—" }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Priority</h3>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                                {% if crime.priority == 'High' or crime.priority == 'Emergency' %}bg-red-100 text-red-800
+                                {% elif crime.priority == 'Medium' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-green-100 text-green-800{% endif %}">
+                                {{ crime.priority|default:"Medium" }}
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Department</h3>
+                            <p class="text-gray-900">{{ crime.department.name|default:"Not assigned" }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Date Reported</h3>
+                            <p class="text-gray-900">{{ crime.date_reported|date:"F d, Y" }}</p>
+                            <p class="text-sm text-gray-500">{{ crime.date_reported|date:"g:i A" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📝 Incident Description</h2>
+                    <div class="prose max-w-none">
+                        <p class="text-gray-700 whitespace-pre-line">{{ crime.description|title }}</p>
+                    </div>
+                </div>
+
+                <!-- Location Card - Simplified -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📍 Location Details</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Reported Location</h3>
+                            <p class="text-gray-900 flex items-center">
+                                <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                                {{ crime.location }}
+                            </p>
+                        </div>
+                        
+                        {% if crime.latitude and crime.longitude %}
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">GPS Coordinates</h3>
+                            <div class="flex items-center space-x-4">
+                                <p class="text-gray-900 font-mono text-sm">
+                                    Lat: {{ crime.latitude|floatformat:6 }}, Lng: {{ crime.longitude|floatformat:6 }}
+                                </p>
+                                <button onclick="openInGoogleMaps()"
+                                        class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                    <i class="fas fa-external-link-alt mr-1"></i> View on Map
+                                </button>
+                            </div>
+                        </div>
+                        {% else %}
+                        <!-- Show message when no GPS coordinates available -->
+                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600">No GPS coordinates available</p>
+                                    <p class="text-gray-500 text-sm">Location is described as text only</p>
+                                </div>
+                                <button onclick="searchInGoogleMaps()" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center space-x-2 text-sm">
+                                    <i class="fas fa-search"></i>
+                                    <span>Search Location</span>
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Evidence Card -->
+                {% if crime.evidence_image or crime.evidence_video or crime.evidence_audio %}
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📷 Evidence Collection</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Photo Evidence -->
+                        {% if crime.evidence_image %}
+                        <div class="text-center">
+                            <h3 class="font-semibold text-gray-700 mb-3">📸 Photo Evidence</h3>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                <img src="{{ crime.evidence_image.url }}" 
+                                     alt="Evidence Photo" 
+                                     class="mx-auto rounded-lg max-h-48 object-cover cursor-pointer hover:shadow-md transition-shadow"
+                                     onclick="openModal('{{ crime.evidence_image.url }}', 'image')">
+                                <button onclick="openModal('{{ crime.evidence_image.url }}', 'image')"
+                                        class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                    <i class="fas fa-expand mr-1"></i> View Full Size
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Video Evidence -->
+                        {% if crime.evidence_video %}
+                        <div class="text-center">
+                            <h3 class="font-semibold text-gray-700 mb-3">🎥 Video Evidence</h3>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                <video controls class="mx-auto rounded-lg max-h-48 w-full">
+                                    <source src="{{ crime.evidence_video.url }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <a href="{{ crime.evidence_video.url }}" 
+                                   download
+                                   class="inline-block mt-2 text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                    <i class="fas fa-download mr-1"></i> Download Video
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Audio Evidence -->
+                        {% if crime.evidence_audio %}
+                        <div class="text-center">
+                            <h3 class="font-semibold text-gray-700 mb-3">🎤 Audio Evidence</h3>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                <div class="bg-gray-50 rounded-lg p-4 h-32 flex items-center justify-center">
+                                    <audio controls class="w-full">
+                                        <source src="{{ crime.evidence_audio.url }}" type="audio/mpeg">
+                                        Your browser does not support the audio element.
+                                    </audio>
+                                </div>
+                                <a href="{{ crime.evidence_audio.url }}" 
+                                   download
+                                   class="inline-block mt-2 text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                    <i class="fas fa-download mr-1"></i> Download Audio
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if not crime.evidence_image and not crime.evidence_video and not crime.evidence_audio %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-camera text-gray-300 text-4xl mb-3"></i>
+                        <p class="text-gray-500">No evidence attached to this report</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column - Officer Actions & Meta Information -->
+            <div class="space-y-6">
+                <!-- Status Update Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">🔄 Update Status</h2>
+                    
+                    {% if request.user.is_authenticated and request.user.officer.department == crime.department %}
+                        {% if crime.status == 'Resolved' or crime.status == 'Dismissed' %}
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 text-xl mr-3"></i>
+                                <div>
+                                    <p class="font-semibold text-green-800">Case Closed</p>
+                                    <p class="text-green-700 text-sm">This report has been <strong>{{ crime.status }}</strong>. Status updates are disabled.</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <form method="POST" action="{% url 'update-status' crime.id %}" class="space-y-4">
+                            {% csrf_token %}
+                            <div>
+                                <label for="status" class="block font-semibold text-gray-700 mb-2">
+                                    Current Status
+                                </label>
+                                <select name="status" id="status" 
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors">
+                                    <option value="Pending" {% if crime.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                    <option value="Investigating" {% if crime.status == 'Investigating' %}selected{% endif %}>Investigating</option>
+                                    <option value="Resolved" {% if crime.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                                    <option value="Dismissed" {% if crime.status == 'Dismissed' %}selected{% endif %}>Dismissed</option>
+                                </select>
+                            </div>
+                            <button type="submit"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 font-semibold">
+                                <i class="fas fa-save"></i>
+                                <span>Update Status</span>
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% else %}
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-xl mr-3"></i>
+                            <div>
+                                <p class="font-semibold text-yellow-800">Restricted Access</p>
+                                <p class="text-yellow-700 text-sm">You can only update reports from your department.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Report Meta Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📊 Report Details</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-1">Report ID</h3>
+                            <p class="text-gray-900 font-mono">{{ crime.report_id }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-1">Date Reported</h3>
+                            <p class="text-gray-900">{{ crime.date_reported|date:"F d, Y" }}</p>
+                            <p class="text-sm text-gray-500">{{ crime.date_reported|date:"g:i A" }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-1">Last Updated</h3>
+                            <p class="text-gray-900">{{ crime.date_updated|date:"F d, Y"|default:"—" }}</p>
+                            <p class="text-sm text-gray-500">{{ crime.date_updated|date:"g:i A"|default:"" }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-1">Days Since Report</h3>
+                            <p class="text-gray-900">{{ crime.days_since_reported }} day{{ crime.days_since_reported|pluralize }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">⚡ Quick Actions</h2>
+                    
+                    <div class="space-y-3">
+                        <a href="{% url 'officer-board' %}" 
+                           class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
+                            <div class="bg-blue-500 p-2 rounded-full">
+                                <i class="fas fa-tachometer-alt text-white text-sm"></i>
+                            </div>
+                            <span class="font-semibold text-blue-700">Back to Dashboard</span>
+                        </a>
+                        
+                        <a href="{% url 'add-report' %}" 
+                           class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg hover:bg-green-100 transition">
+                            <div class="bg-green-500 p-2 rounded-full">
+                                <i class="fas fa-plus text-white text-sm"></i>
+                            </div>
+                            <span class="font-semibold text-green-700">Create New Report</span>
+                        </a>
+                        
+                        {% if crime.evidence_image or crime.evidence_video or crime.evidence_audio %}
+                        <button onclick="downloadAllEvidence()"
+                                class="w-full flex items-center space-x-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
+                            <div class="bg-purple-500 p-2 rounded-full">
+                                <i class="fas fa-download text-white text-sm"></i>
+                            </div>
+                            <span class="font-semibold text-purple-700">Download All Evidence</span>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center hidden z-50">
+    <div class="max-w-4xl max-h-full p-4">
+        <div class="relative">
+            <button onclick="closeModal()" 
+                    class="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition">
+                <i class="fas fa-times text-gray-700"></i>
+            </button>
+            <img id="modalImage" src="" alt="Evidence" class="max-w-full max-h-screen object-contain rounded-lg">
+        </div>
+    </div>
+</div>
+
+<script>
+    // Map functions
+    function openInGoogleMaps() {
+        {% if crime.latitude and crime.longitude %}
+        window.open(`https://www.google.com/maps?q={{ crime.latitude }},{{ crime.longitude }}`, '_blank');
+        {% else %}
+        searchInGoogleMaps();
+        {% endif %}
+    }
+
+    function searchInGoogleMaps() {
+        const address = encodeURIComponent("{{ crime.location }}");
+        window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
+    }
+
+    // Modal functions for image viewing
+    function openModal(src, type) {
+        if (type === 'image') {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = src;
+            modal.classList.remove('hidden');
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('imageModal');
+        modal.classList.add('hidden');
+    }
+
+    // Close modal when clicking outside the image
+    document.getElementById('imageModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+
+    // Download all evidence function
+    function downloadAllEvidence() {
+        // This would need to be implemented with a proper backend endpoint
+        alert('Download all evidence feature would be implemented with a backend endpoint that zips all files.');
+    }
+</script>
+
+<!-- Font Awesome -->
+<script src="https://kit.fontawesome.com/your-font-awesome-kit.js" crossorigin="anonymous"></script>
+
+<style>
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        transition: transform 0.2s ease-in-out;
+    }
+</style>
+
+{% endblock %}

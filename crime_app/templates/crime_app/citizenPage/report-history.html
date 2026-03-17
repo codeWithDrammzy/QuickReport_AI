@@ -1,0 +1,548 @@
+{% extends "crime_app/citizenPage/maain.html" %}
+{% load static %}
+
+{% block content %}
+<!-- Main Content -->
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">My Crime Reports</h1>
+                    <p class="text-gray-600 mt-2">Track all your submitted crime reports</p>
+                </div>
+                <a href="{% url 'user-report' %}" 
+                   class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center">
+                    <i class="fas fa-plus mr-2"></i>New Report
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Summary - Added AI Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+            <!-- Total Reports (existing) -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Total Reports</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ total_reports }}</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <i class="fas fa-file-alt text-blue-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending (existing) -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Pending</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ pending_reports }}</p>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full">
+                        <i class="fas fa-clock text-yellow-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resolved (existing) -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Resolved</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ resolved_reports }}</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dismissed (existing) -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Dismissed</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ dismissed_reports }}</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <i class="fas fa-times-circle text-red-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: AI Analyzed Stats -->
+            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-purple-100">AI Analyzed</p>
+                        <p class="text-2xl font-bold text-white">{{ ai_analyzed_count }}</p>
+                        <p class="text-xs text-purple-200 mt-1">{{ ai_coverage }}% of reports</p>
+                    </div>
+                    <div class="bg-white/20 p-3 rounded-full">
+                        <i class="fas fa-robot text-white text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Table -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <!-- Table Header with AI Filter -->
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <h2 class="text-xl font-bold text-gray-800">Report History</h2>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
+                        <!-- AI Filter Toggle -->
+                        <div class="flex items-center space-x-2">
+                            <button id="showAllBtn" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition">
+                                All Reports
+                            </button>
+                            <button id="showAIOnlyBtn" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                                <i class="fas fa-robot mr-1"></i>AI Analyzed
+                            </button>
+                        </div>
+                        <!-- Search -->
+                        <div class="relative w-full md:w-64">
+                            <input type="text" 
+                                   placeholder="Search reports..." 
+                                   class="border border-gray-300 rounded-lg px-4 py-2 pl-10 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   id="searchInput">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if reports %}
+            <!-- Desktop Table -->
+            <div class="hidden md:block overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                            
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Analysis</th> <!-- NEW COLUMN -->
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for report in reports %}
+                        <tr class="hover:bg-gray-50 transition {% if report.ai_analyzed_at %}ai-analyzed{% endif %}" data-report-id="{{ report.report_id }}" data-ai-analyzed="{% if report.ai_analyzed_at %}true{% else %}false{% endif %}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-mono font-semibold text-gray-900">{{ report.report_id }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">{{ report.title|upper }}</div>
+                                
+                            </td>
+                           
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ report.location }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium 
+                                    {% if report.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif report.status == 'Resolved' %}bg-green-100 text-green-800
+                                    {% elif report.status == 'Dismissed' %}bg-red-100 text-red-800
+                                    {% elif report.status == 'Investigating' %}bg-blue-100 text-blue-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {% if report.status == 'Pending' %}<i class="fas fa-clock mr-1"></i>
+                                    {% elif report.status == 'Resolved' %}<i class="fas fa-check mr-1"></i>
+                                    {% elif report.status == 'Dismissed' %}<i class="fas fa-times mr-1"></i>
+                                    {% elif report.status == 'Investigating' %}<i class="fas fa-search mr-1"></i>
+                                    {% endif %}
+                                    {{ report.status }}
+                                </span>
+                            </td>
+                            <!-- NEW: AI Analysis Column -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if report.ai_priority_suggestion %}
+                                    <div class="flex items-center">
+                                        {% if report.ai_priority_suggestion == report.priority %}
+                                            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                                                <i class="fas fa-check-circle mr-1"></i> AI Match
+                                            </span>
+                                        {% else %}
+                                            <div class="relative group">
+                                                <span class="inline-flex items-center px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 cursor-help">
+                                                    <i class="fas fa-robot mr-1"></i> AI Suggests
+                                                </span>
+                                                <!-- Tooltip -->
+                                                <div class="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-xl z-50">
+                                                    <div class="font-bold mb-2 flex items-center">
+                                                        <i class="fas fa-robot text-purple-400 mr-1"></i>
+                                                        AI Analysis
+                                                    </div>
+                                                    <p class="mb-1">Priority: <span class="text-yellow-300 font-semibold">{{ report.ai_priority_suggestion }}</span></p>
+                                                    <p class="mb-1">Confidence: <span class="text-green-300">{{ report.ai_priority_confidence }}%</span></p>
+                                                    <p>Incident: <span class="text-blue-300">{{ report.ai_incident_suggestion }}</span></p>
+                                                    <div class="mt-2 pt-2 border-t border-gray-600 text-gray-400">
+                                                        <i class="fas fa-tag mr-1"></i>
+                                                        {% if report.get_priority_keywords %}
+                                                            {{ report.get_priority_keywords|slice:":2"|join:", " }}
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-gray-400 text-xs">Pending analysis</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ report.date_reported|date:"M d, Y" }}</div>
+                                <div class="text-xs text-gray-500">{{ report.date_reported|timesince }} ago</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a href="{% url 'c-report-detail' report.id %}" 
+                                   class="text-blue-600 hover:text-blue-900 font-semibold mr-4">
+                                    <i class="fas fa-eye mr-1"></i>View
+                                </a>
+                                {% if report.evidence_image or report.evidence_video or report.evidence_audio %}
+                                <span class="text-green-600" title="Has evidence">
+                                    <i class="fas fa-paperclip"></i>
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Cards -->
+            <div class="md:hidden">
+                <div class="space-y-4 p-4">
+                    {% for report in reports %}
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition {% if report.ai_analyzed_at %}ai-analyzed{% endif %}" data-report-id="{{ report.report_id }}" data-report-title="{{ report.title|lower }}" data-ai-analyzed="{% if report.ai_analyzed_at %}true{% else %}false{% endif %}">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-semibold text-gray-900">{{ report.title }}</h3>
+                                <p class="text-sm text-gray-500 mt-1">{{ report.description|truncatewords:15 }}</p>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                                {% if report.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                {% elif report.status == 'Resolved' %}bg-green-100 text-green-800
+                                {% elif report.status == 'Dismissed' %}bg-red-100 text-red-800
+                                {% elif report.status == 'Investigating' %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ report.status }}
+                            </span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                            <div class="flex items-center">
+                                <i class="fas fa-hashtag mr-2 text-gray-400"></i>
+                                <span class="font-mono">{{ report.report_id }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-building mr-2 text-gray-400"></i>
+                                <span>{{ report.department.name|default:"Not assigned" }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                                <span class="truncate">{{ report.location }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar mr-2 text-gray-400"></i>
+                                <span>{{ report.date_reported|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+
+                        <!-- NEW: Mobile AI Indicator -->
+                        <div class="mb-3 flex items-center">
+                            <i class="fas fa-robot text-xs {% if report.ai_priority_suggestion %}text-purple-500{% else %}text-gray-300{% endif %} mr-1"></i>
+                            {% if report.ai_priority_suggestion %}
+                                <span class="text-xs {% if report.ai_priority_suggestion == report.priority %}text-green-600{% else %}text-yellow-600{% endif %}">
+                                    AI: {{ report.ai_priority_suggestion }} ({{ report.ai_priority_confidence }}%)
+                                    {% if report.ai_priority_suggestion != report.priority %}
+                                        <span class="text-gray-400 ml-1">- different from your selection</span>
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                <span class="text-xs text-gray-400">AI analysis pending</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                            <div class="flex items-center space-x-2">
+                                {% if report.evidence_image or report.evidence_video or report.evidence_audio %}
+                                <span class="text-green-600 text-sm" title="Has evidence">
+                                    <i class="fas fa-paperclip mr-1"></i>Evidence
+                                </span>
+                                {% else %}
+                                <span class="text-gray-400 text-sm">
+                                    <i class="fas fa-paperclip mr-1"></i>No evidence
+                                </span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'c-report-detail' report.id %}"  
+                               class="text-blue-600 hover:text-blue-800 font-semibold text-sm">
+                                View Details <i class="fas fa-chevron-right ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-12">
+                <div class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-file-alt text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">No Reports Yet</h3>
+                <p class="text-gray-500 mb-6">You haven't submitted any crime reports yet.</p>
+                <a href="{% url 'user-report' %}" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Submit Your First Report
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Status Legend with AI Info -->
+        <div class="mt-6 bg-white rounded-xl shadow-md p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Status Guide (existing) -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Status Guide</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                            <div>
+                                <p class="font-medium text-gray-800">Pending</p>
+                                <p class="text-sm text-gray-600">Under initial review</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-3 h-3 bg-blue-500 rounded-full"></span>
+                            <div>
+                                <p class="font-medium text-gray-800">Investigating</p>
+                                <p class="text-sm text-gray-600">Being investigated</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                            <div>
+                                <p class="font-medium text-gray-800">Resolved</p>
+                                <p class="text-sm text-gray-600">Case successfully closed</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                            <div>
+                                <p class="font-medium text-gray-800">Dismissed</p>
+                                <p class="text-sm text-gray-600">Case rejected or closed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: AI Guide -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-robot text-purple-600 mr-2"></i>
+                        AI Analysis Guide
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                            <div>
+                                <p class="font-medium text-gray-800">AI Match</p>
+                                <p class="text-sm text-gray-600">AI agrees with your selection</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                            <div>
+                                <p class="font-medium text-gray-800">AI Suggests</p>
+                                <p class="text-sm text-gray-600">Hover to see AI's recommendation</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
+                            <div>
+                                <p class="font-medium text-gray-800">Confidence Score</p>
+                                <p class="text-sm text-gray-600">How sure AI is about its suggestion</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Search and Filter -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const showAllBtn = document.getElementById('showAllBtn');
+        const showAIOnlyBtn = document.getElementById('showAIOnlyBtn');
+        const reportRows = document.querySelectorAll('tr[data-report-id], .bg-white.border');
+        let currentFilter = 'all'; // 'all' or 'ai'
+        
+        // Search functionality
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                reportRows.forEach(row => {
+                    const reportId = row.getAttribute('data-report-id') || '';
+                    const reportTitle = row.getAttribute('data-report-title') || '';
+                    const matchesSearch = reportId.toLowerCase().includes(searchTerm) || reportTitle.includes(searchTerm);
+                    const matchesFilter = currentFilter === 'all' || row.getAttribute('data-ai-analyzed') === 'true';
+                    
+                    if (matchesSearch && matchesFilter) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // AI Filter functionality
+        if (showAllBtn && showAIOnlyBtn) {
+            showAllBtn.addEventListener('click', function() {
+                currentFilter = 'all';
+                // Update button styles
+                showAllBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                showAllBtn.classList.add('bg-purple-600', 'text-white');
+                showAIOnlyBtn.classList.remove('bg-purple-600', 'text-white');
+                showAIOnlyBtn.classList.add('bg-gray-200', 'text-gray-700');
+                
+                // Apply filter
+                reportRows.forEach(row => {
+                    const matchesSearch = true; // Will be combined with search
+                    const matchesFilter = true;
+                    
+                    if (matchesSearch && matchesFilter) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Trigger search to combine filters
+                if (searchInput) {
+                    searchInput.dispatchEvent(new Event('input'));
+                }
+            });
+            
+            showAIOnlyBtn.addEventListener('click', function() {
+                currentFilter = 'ai';
+                // Update button styles
+                showAIOnlyBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                showAIOnlyBtn.classList.add('bg-purple-600', 'text-white');
+                showAllBtn.classList.remove('bg-purple-600', 'text-white');
+                showAllBtn.classList.add('bg-gray-200', 'text-gray-700');
+                
+                // Apply filter
+                reportRows.forEach(row => {
+                    const matchesSearch = true; // Will be combined with search
+                    const matchesFilter = row.getAttribute('data-ai-analyzed') === 'true';
+                    
+                    if (matchesSearch && matchesFilter) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Trigger search to combine filters
+                if (searchInput) {
+                    searchInput.dispatchEvent(new Event('input'));
+                }
+            });
+        }
+
+        // Click animation
+        reportRows.forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (!e.target.closest('a')) {
+                    const link = this.querySelector('a[href*="c-report-detail"]');
+                    if (link) {
+                        link.style.transform = 'scale(0.95)';
+                        setTimeout(() => {
+                            link.style.transform = '';
+                        }, 150);
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+    /* Smooth transitions */
+    .transition {
+        transition: all 0.3s ease;
+    }
+
+    /* Hover effects */
+    .hover\:bg-gray-50:hover {
+        transition: background-color 0.2s ease;
+    }
+
+    .hover\:shadow-md:hover {
+        transition: box-shadow 0.2s ease;
+    }
+
+    /* Tooltip animation */
+    .group:hover .group-hover\:block {
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translate(-50%, 10px);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+    }
+
+    /* Custom scrollbar for table */
+    @media (min-width: 768px) {
+        .overflow-x-auto {
+            overflow-x: auto;
+        }
+        
+        ::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    }
+
+    /* Highlight AI-analyzed rows */
+    tr.ai-analyzed {
+        background-color: #faf5ff;
+    }
+</style>
+{% endblock content %}

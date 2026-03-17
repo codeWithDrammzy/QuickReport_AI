@@ -1,0 +1,509 @@
+{% extends "crime_app/citizenPage/maain.html" %}
+{% load static %}
+
+{% block content %}
+<!-- Main Content -->
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header with Back Button -->
+        <div class="mb-6">
+            <a href="{% url 'report-history' %}" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold mb-4">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Report History
+            </a>
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Crime Report Details</h1>
+                    <p class="text-gray-600 mt-2">Complete information about your submitted report</p>
+                </div>
+                <div class="text-right">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                        {% if report.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                        {% elif report.status == 'Resolved' %}bg-green-100 text-green-800
+                        {% elif report.status == 'Dismissed' %}bg-red-100 text-red-800
+                        {% elif report.status == 'Investigating' %}bg-blue-100 text-blue-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {% if report.status == 'Pending' %}<i class="fas fa-clock mr-1"></i>
+                        {% elif report.status == 'Resolved' %}<i class="fas fa-check mr-1"></i>
+                        {% elif report.status == 'Dismissed' %}<i class="fas fa-times mr-1"></i>
+                        {% elif report.status == 'Investigating' %}<i class="fas fa-search mr-1"></i>
+                        {% endif %}
+                        {{ report.status }}
+                    </span>
+                    <p class="text-xs text-gray-500 mt-1">Report ID: {{ report.report_id }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Report Details -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Basic Information Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📋 Report Information</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Title</h3>
+                            <p class="text-gray-900">{{ report.title }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Incident Type</h3>
+                            <p class="text-gray-900">{{ report.get_incident_type_display }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Priority</h3>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                                {% if report.priority == 'High' or report.priority == 'Emergency' %}bg-red-100 text-red-800
+                                {% elif report.priority == 'Medium' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-green-100 text-green-800{% endif %}">
+                                {{ report.priority }}
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Department</h3>
+                            <p class="text-gray-900">{{ report.department.name|default:"Not assigned" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== NEW AI INSIGHTS CARD ===== -->
+                {% if report.ai_priority_suggestion %}
+                <div class="bg-gradient-to-r from-purple-50 via-purple-100 to-indigo-50 rounded-xl p-6 border-2 border-purple-200 shadow-lg">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="bg-purple-600 p-2 rounded-lg mr-3">
+                                <i class="fas fa-robot text-white text-lg"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">AI-Powered Analysis</h2>
+                        </div>
+                        <span class="bg-green-100 text-green-700 text-xs px-3 py-1.5 rounded-full font-semibold border border-green-200">
+                            <i class="fas fa-check-circle mr-1 text-xs"></i>Active
+                        </span>
+                    </div>
+                    
+                    <!-- AI Results Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <!-- Priority Card -->
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-purple-100">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Priority Analysis</p>
+                                    <div class="flex items-baseline">
+                                        <span class="text-3xl font-bold 
+                                            {% if report.ai_priority_suggestion == 'Emergency' %}text-red-600
+                                            {% elif report.ai_priority_suggestion == 'High' %}text-orange-600
+                                            {% elif report.ai_priority_suggestion == 'Medium' %}text-yellow-600
+                                            {% else %}text-green-600{% endif %}">
+                                            {{ report.ai_priority_suggestion }}
+                                        </span>
+                                        <span class="ml-2 text-sm font-medium text-gray-500">
+                                            (User selected: {{ report.priority }})
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="bg-purple-100 px-3 py-1 rounded-full">
+                                    <span class="text-sm font-bold text-purple-700">{{ report.ai_priority_confidence }}%</span>
+                                    <span class="text-xs text-purple-500 ml-1">conf</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Priority Keywords -->
+                            {% if report.get_priority_keywords %}
+                            <div class="mt-3 pt-2 border-t border-gray-100">
+                                <p class="text-xs text-gray-500 mb-2">Trigger keywords:</p>
+                                <div class="flex flex-wrap gap-2">
+                                    {% for kw in report.get_priority_keywords %}
+                                    <span class="bg-purple-50 text-purple-700 text-xs px-3 py-1.5 rounded-full border border-purple-200">
+                                        <i class="fas fa-tag mr-1 text-purple-400"></i>{{ kw }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Incident Type Card -->
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-purple-100">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Incident Classification</p>
+                                    <div class="flex items-baseline">
+                                        <span class="text-2xl font-bold text-gray-800">
+                                            {{ report.ai_incident_suggestion|default:"Analyzing..." }}
+                                        </span>
+                                        <span class="ml-2 text-sm font-medium text-gray-500">
+                                            (User selected: {{ report.incident_type }})
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="bg-purple-100 px-3 py-1 rounded-full">
+                                    <span class="text-sm font-bold text-purple-700">{{ report.ai_incident_confidence }}%</span>
+                                    <span class="text-xs text-purple-500 ml-1">conf</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Incident Keywords -->
+                            {% if report.get_incident_keywords %}
+                            <div class="mt-3 pt-2 border-t border-gray-100">
+                                <p class="text-xs text-gray-500 mb-2">Detected patterns:</p>
+                                <div class="flex flex-wrap gap-2">
+                                    {% for kw in report.get_incident_keywords %}
+                                    <span class="bg-indigo-50 text-indigo-700 text-xs px-3 py-1.5 rounded-full border border-indigo-200">
+                                        <i class="fas fa-search mr-1 text-indigo-400"></i>{{ kw }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- AI Insight Message -->
+                    <div class="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-purple-200">
+                        <div class="flex items-start">
+                            <div class="bg-yellow-100 p-1.5 rounded-full mr-3">
+                                <i class="fas fa-lightbulb text-yellow-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    <span class="font-semibold">AI Insight:</span> 
+                                    Based on your description containing 
+                                    {% if report.get_priority_keywords %}
+                                        "<span class="font-medium text-purple-700">{{ report.get_priority_keywords.0 }}</span>"
+                                    {% endif %}
+                                    {% if report.get_priority_keywords and report.get_incident_keywords %} and {% endif %}
+                                    {% if report.get_incident_keywords %}
+                                        "<span class="font-medium text-purple-700">{{ report.get_incident_keywords.0 }}</span>"
+                                    {% endif %}, 
+                                    our AI suggests this is a 
+                                    <span class="font-semibold 
+                                        {% if report.ai_priority_suggestion == 'Emergency' %}text-red-600
+                                        {% elif report.ai_priority_suggestion == 'High' %}text-orange-600
+                                        {% elif report.ai_priority_suggestion == 'Medium' %}text-yellow-600
+                                        {% else %}text-green-600{% endif %}">
+                                        {{ report.ai_priority_suggestion|lower }}
+                                    </span> priority 
+                                    <span class="font-semibold text-indigo-600">{{ report.ai_incident_suggestion|lower }}</span> case.
+                                </p>
+                                {% if report.ai_priority_suggestion != report.priority %}
+                                <div class="mt-2 flex items-center text-yellow-700 bg-yellow-50 px-3 py-2 rounded-lg">
+                                    <i class="fas fa-exclamation-triangle mr-2 text-yellow-600"></i>
+                                    <span class="text-sm">Note: AI suggests different priority than selected. Consider reviewing.</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer with timestamp -->
+                    <div class="mt-3 flex justify-between items-center text-xs text-gray-400">
+                        <span>
+                            <i class="far fa-clock mr-1"></i>
+                            Analyzed: {{ report.ai_analyzed_at|date:"F j, Y H:i"|default:"Just now" }}
+                        </span>
+                        <span>
+                            <i class="fas fa-microchip mr-1"></i>
+                            AI Model v1.0
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
+                <!-- ===== END AI INSIGHTS CARD ===== -->
+
+                <!-- Description Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📝 Incident Description</h2>
+                    <div class="prose max-w-none">
+                        <p class="text-gray-700 whitespace-pre-line">{{ report.description }}</p>
+                    </div>
+                </div>
+
+                <!-- Location Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📍 Location Details</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">Reported Location</h3>
+                            <p class="text-gray-900 flex items-center">
+                                <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                                {{ report.location }}
+                            </p>
+                        </div>
+                        
+                        {% if report.latitude and report.longitude %}
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-2">GPS Coordinates</h3>
+                            <div class="flex items-center space-x-4">
+                                <p class="text-gray-900 font-mono text-sm">
+                                    Lat: {{ report.latitude|floatformat:6 }}, Lng: {{ report.longitude|floatformat:6 }}
+                                </p>
+                                {% if report.get_google_maps_url %}
+                                <a href="{{ report.get_google_maps_url }}" 
+                                   target="_blank"
+                                   class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                    <i class="fas fa-external-link-alt mr-1"></i> View on Map
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Evidence Card -->
+                {% if report.evidence_image or report.evidence_video or report.evidence_audio %}
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📷 Evidence</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Photo Evidence -->
+                        {% if report.evidence_image %}
+                        <div class="text-center">
+                            <h3 class="font-semibold text-gray-700 mb-3">📸 Photo</h3>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                <img src="{{ report.evidence_image.url }}" 
+                                     alt="Evidence Photo" 
+                                     class="mx-auto rounded-lg max-h-48 object-cover cursor-pointer"
+                                     onclick="openModal('{{ report.evidence_image.url }}', 'image')">
+                                <button onclick="openModal('{{ report.evidence_image.url }}', 'image')"
+                                        class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                    <i class="fas fa-expand mr-1"></i> View Full Size
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Video Evidence -->
+                        {% if report.evidence_video %}
+                        <div class="text-center">
+                            <h3 class="font-semibold text-gray-700 mb-3">🎥 Video</h3>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                <video controls class="mx-auto rounded-lg max-h-48">
+                                    <source src="{{ report.evidence_video.url }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <a href="{{ report.evidence_video.url }}" 
+                                   download
+                                   class="inline-block mt-2 text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                    <i class="fas fa-download mr-1"></i> Download Video
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Audio Evidence -->
+                        {% if report.evidence_audio %}
+                        <div class="text-center">
+                            <h3 class="font-semibold text-gray-700 mb-3">🎤 Audio</h3>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                <audio controls class="w-full">
+                                    <source src="{{ report.evidence_audio.url }}" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                                <a href="{{ report.evidence_audio.url }}" 
+                                   download
+                                   class="inline-block mt-2 text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                    <i class="fas fa-download mr-1"></i> Download Audio
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if not report.evidence_image and not report.evidence_video and not report.evidence_audio %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-camera text-gray-300 text-4xl mb-3"></i>
+                        <p class="text-gray-500">No evidence attached to this report</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column - Meta Information -->
+            <div class="space-y-6">
+                <!-- Report Meta Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📊 Report Details</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-1">Report ID</h3>
+                            <p class="text-gray-900 font-mono">{{ report.report_id }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-1">Date Reported</h3>
+                            <p class="text-gray-900">{{ report.date_reported|date:"F d, Y" }}</p>
+                            <p class="text-sm text-gray-500">{{ report.date_reported|date:"g:i A" }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-1">Last Updated</h3>
+                            <p class="text-gray-900">{{ report.date_updated|date:"F d, Y" }}</p>
+                            <p class="text-sm text-gray-500">{{ report.date_updated|date:"g:i A" }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-700 mb-1">Days Since Report</h3>
+                            <p class="text-gray-900">{{ report.days_since_reported }} day{{ report.days_since_reported|pluralize }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Timeline -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">🔄 Status Timeline</h2>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check text-white text-sm"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">Report Submitted</p>
+                                <p class="text-sm text-gray-600">{{ report.date_reported|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 
+                                    {% if report.status == 'Pending' %}bg-yellow-500
+                                    {% elif report.status == 'Investigating' %}bg-blue-500
+                                    {% elif report.status == 'Resolved' %}bg-green-500
+                                    {% elif report.status == 'Dismissed' %}bg-red-500
+                                    {% else %}bg-gray-400{% endif %} 
+                                    rounded-full flex items-center justify-center">
+                                    <i class="fas 
+                                        {% if report.status == 'Pending' %}fa-clock
+                                        {% elif report.status == 'Investigating' %}fa-search
+                                        {% elif report.status == 'Resolved' %}fa-check
+                                        {% elif report.status == 'Dismissed' %}fa-times
+                                        {% else %}fa-question{% endif %} 
+                                        text-white text-sm"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">Current Status</p>
+                                <p class="text-sm text-gray-600">{{ report.status }} - {{ report.date_updated|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">⚡ Quick Actions</h2>
+                    
+                    <div class="space-y-3">
+                        <a href="{% url 'report-history' %}" 
+                           class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
+                            <div class="bg-blue-500 p-2 rounded-full">
+                                <i class="fas fa-list text-white text-sm"></i>
+                            </div>
+                            <span class="font-semibold text-blue-700">View All Reports</span>
+                        </a>
+                        
+                        <a href="{% url 'user-report' %}" 
+                           class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg hover:bg-green-100 transition">
+                            <div class="bg-green-500 p-2 rounded-full">
+                                <i class="fas fa-plus text-white text-sm"></i>
+                            </div>
+                            <span class="font-semibold text-green-700">Submit New Report</span>
+                        </a>
+                        
+                        {% if report.evidence_image or report.evidence_video or report.evidence_audio %}
+                        <button onclick="downloadAllEvidence()"
+                                class="w-full flex items-center space-x-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
+                            <div class="bg-purple-500 p-2 rounded-full">
+                                <i class="fas fa-download text-white text-sm"></i>
+                            </div>
+                            <span class="font-semibold text-purple-700">Download All Evidence</span>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center hidden z-50">
+    <div class="max-w-4xl max-h-full p-4">
+        <div class="relative">
+            <button onclick="closeModal()" 
+                    class="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition">
+                <i class="fas fa-times text-gray-700"></i>
+            </button>
+            <img id="modalImage" src="" alt="Evidence" class="max-w-full max-h-screen object-contain rounded-lg">
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    // Modal functionality
+    function openModal(src, type) {
+        if (type === 'image') {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = src;
+            modal.classList.remove('hidden');
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('imageModal');
+        modal.classList.add('hidden');
+    }
+
+    // Close modal when clicking outside the image
+    document.getElementById('imageModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+
+    // Download all evidence function
+    function downloadAllEvidence() {
+        // This would need to be implemented with a proper backend endpoint
+        // For now, we'll show a message
+        alert('Download all evidence feature would be implemented with a backend endpoint that zips all files.');
+    }
+
+    // Print report function
+    function printReport() {
+        window.print();
+    }
+</script>
+
+<!-- Print Styles -->
+<style>
+    @media print {
+        .bg-gray-50 { background: white !important; }
+        .shadow-md { box-shadow: none !important; }
+        .rounded-xl { border-radius: 0 !important; }
+        .hidden { display: none !important; }
+        .no-print { display: none !important; }
+    }
+</style>
+
+{% endblock content %}

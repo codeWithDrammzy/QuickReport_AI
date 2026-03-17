@@ -1,0 +1,427 @@
+{% extends "crime_app/adminPage/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-3 sm:p-8">
+  <!-- Header Section -->
+  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 sm:mb-8">
+    <div>
+      <h1 class="text-xl sm:text-3xl font-bold text-gray-800 flex items-center">
+        <i class="fas fa-user-shield text-blue-600 mr-2 sm:mr-3"></i>
+        Police Officers
+      </h1>
+      <p class="text-gray-600 text-sm sm:text-base mt-1">Manage law enforcement personnel</p>
+    </div>
+    <button id="toggleFormBtn"
+      class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-sm sm:text-base">
+      <i class="fas fa-plus-circle"></i>
+      Add Officer
+    </button>
+  </div>
+
+  <!-- Stats Overview - Mobile Optimized -->
+  <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+    <!-- Total Officers -->
+    <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-blue-600 text-[10px] sm:text-sm font-semibold">TOTAL</p>
+          <p class="text-lg sm:text-2xl font-bold text-blue-800">{{ officers.count }}</p>
+        </div>
+        <div class="bg-blue-500 p-1.5 sm:p-3 rounded-lg">
+          <i class="fas fa-users text-white text-sm sm:text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- On Duty -->
+    <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-green-600 text-[10px] sm:text-sm font-semibold">ON DUTY</p>
+          <p class="text-lg sm:text-2xl font-bold text-green-800">
+            {% with on_duty_count=officers|length|default:0 %}
+              {{ on_duty_count }}
+            {% endwith %}
+          </p>
+        </div>
+        <div class="bg-green-500 p-1.5 sm:p-3 rounded-lg">
+          <i class="fas fa-badge-check text-white text-sm sm:text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Departments -->
+    <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-yellow-600 text-[10px] sm:text-sm font-semibold">DEPT</p>
+          <p class="text-lg sm:text-2xl font-bold text-yellow-800">
+            {% with dept_count=officers|dictsort:"department.id"|length %}
+              {{ dept_count }}
+            {% endwith %}
+          </p>
+        </div>
+        <div class="bg-yellow-500 p-1.5 sm:p-3 rounded-lg">
+          <i class="fas fa-building text-white text-sm sm:text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active -->
+    <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-purple-600 text-[10px] sm:text-sm font-semibold">ACTIVE</p>
+          <p class="text-lg sm:text-2xl font-bold text-purple-800">{{ officers.count }}</p>
+        </div>
+        <div class="bg-purple-500 p-1.5 sm:p-3 rounded-lg">
+          <i class="fas fa-shield-alt text-white text-sm sm:text-xl"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Officer Form Modal - Mobile Optimized -->
+  <div id="officerForm" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+    <div class="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 sm:p-6 rounded-t-xl sm:rounded-t-2xl sticky top-0">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg sm:text-2xl font-bold flex items-center">
+            <i class="fas fa-user-plus mr-2 sm:mr-3"></i>
+            New Officer
+          </h2>
+          <button id="closeFormBtn" class="text-white hover:text-yellow-300 text-xl sm:text-2xl transition">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <p class="text-blue-100 text-sm sm:text-base mt-1">Add a new law enforcement officer</p>
+      </div>
+
+      <!-- Form Content -->
+      <div class="p-4 sm:p-6">
+        <form method="POST" enctype="multipart/form-data" class="space-y-4 sm:space-y-6">
+          {% csrf_token %}
+          
+          <!-- Personal Information -->
+          <div class="border-b border-gray-200 pb-3 sm:pb-4">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+              <i class="fas fa-id-card text-blue-600 mr-2"></i>
+              Personal Info
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              {% for field in form %}
+                {% if field.name in 'first_name,last_name,email,phone' %}
+                <div class="form-group text-sm sm:text-base">
+                  {{ field|as_crispy_field }}
+                </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Officer Details -->
+          <div class="border-b border-gray-200 pb-3 sm:pb-4">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+              <i class="fas fa-shield-alt text-green-600 mr-2"></i>
+              Officer Details
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              {% for field in form %}
+                {% if field.name in 'rank,badge_number,department,profile_picture' %}
+                <div class="form-group text-sm sm:text-base">
+                  {{ field|as_crispy_field }}
+                </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Account Information -->
+          <div>
+            <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+              <i class="fas fa-lock text-purple-600 mr-2"></i>
+              Account
+            </h3>
+            {% for field in form %}
+              {% if field.name == 'password' %}
+              <div class="form-group text-sm sm:text-base">
+                {{ field|as_crispy_field }}
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
+            <button type="button" id="cancelFormBtn" 
+              class="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2.5 sm:py-3 px-4 rounded-lg sm:rounded-xl transition text-sm sm:text-base order-2 sm:order-1">
+              Cancel
+            </button>
+            <button type="submit"
+              class="w-full sm:flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-semibold py-2.5 sm:py-3 px-4 rounded-lg sm:rounded-xl transition shadow-lg text-sm sm:text-base order-1 sm:order-2">
+              <i class="fas fa-save mr-2"></i>Create
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Messages -->
+  {% if messages %}
+  <div class="mb-4 sm:mb-6">
+    {% for message in messages %}
+    <div class="bg-green-50 border border-green-200 text-green-700 px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl flex items-center text-sm sm:text-base">
+      <i class="fas fa-check-circle text-green-500 mr-2 sm:mr-3 text-base sm:text-xl"></i>
+      <span class="font-semibold">{{ message }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Officers List - Mobile Card View + Desktop Table -->
+  <div class="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <!-- Mobile Card View -->
+    <div class="block sm:hidden divide-y divide-gray-100">
+      {% for officer in officers %}
+      <div class="p-4 hover:bg-blue-50 transition">
+        <!-- Header with Profile and Status -->
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center space-x-3">
+            <div class="relative">
+              {% if officer.profile_picture %}
+                <img src="{{ officer.profile_picture.url }}" alt="{{ officer.user.get_full_name }}"
+                  class="w-10 h-10 rounded-full object-cover border-2 border-blue-200">
+              {% else %}
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center border-2 border-blue-200">
+                  <i class="fas fa-user text-white text-sm"></i>
+                </div>
+              {% endif %}
+              {% if officer.on_duty %}
+              <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+              {% endif %}
+            </div>
+            <div>
+              <div class="font-semibold text-gray-800 text-sm">{{ officer.user.get_full_name|truncatechars:20 }}</div>
+              <div class="text-xs text-gray-500 flex items-center">
+                <i class="fas fa-id-badge mr-1 text-blue-500"></i>
+                ID: {{ officer.id }}
+              </div>
+            </div>
+          </div>
+          {% if officer.on_duty %}
+          <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 border border-green-200">
+            <i class="fas fa-check-circle mr-1"></i>On Duty
+          </span>
+          {% else %}
+          <span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800 border border-red-200">
+            <i class="fas fa-clock mr-1"></i>Off Duty
+          </span>
+          {% endif %}
+        </div>
+
+        <!-- Details Grid -->
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <div>
+            <span class="text-gray-500">Rank:</span>
+            <span class="ml-1 font-semibold text-blue-700">{{ officer.rank }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500">Badge:</span>
+            <span class="ml-1 font-mono">{{ officer.badge_number|truncatechars:8 }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500">Dept:</span>
+            <span class="ml-1">{{ officer.department.name|truncatechars:12 }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500">Phone:</span>
+            <span class="ml-1">{{ officer.user.phone|default:"N/A"|truncatechars:10 }}</span>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="flex items-center text-xs text-gray-600 pt-2 border-t border-gray-100">
+          <i class="fas fa-envelope mr-2 text-blue-500"></i>
+          {{ officer.user.email|default:"No email"|truncatechars:25 }}
+        </div>
+      </div>
+      {% empty %}
+      <div class="p-8 text-center">
+        <div class="text-gray-400">
+          <i class="fas fa-users text-3xl mb-3"></i>
+          <p class="text-base font-semibold">No Officers Found</p>
+          <p class="text-sm mt-1">Add your first police officer</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="hidden sm:block overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+          <tr>
+            <th class="px-4 sm:px-6 py-3 sm:py-4 text-left font-semibold text-xs sm:text-sm">Officer</th>
+            <th class="px-4 sm:px-6 py-3 sm:py-4 text-left font-semibold text-xs sm:text-sm">Contact</th>
+            <th class="px-4 sm:px-6 py-3 sm:py-4 text-left font-semibold text-xs sm:text-sm">Rank & Badge</th>
+            <th class="px-4 sm:px-6 py-3 sm:py-4 text-left font-semibold text-xs sm:text-sm">Department</th>
+            <th class="px-4 sm:px-6 py-3 sm:py-4 text-center font-semibold text-xs sm:text-sm">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for officer in officers %}
+          <tr class="hover:bg-blue-50 transition duration-200 group">
+            <td class="px-4 sm:px-6 py-3 sm:py-4">
+              <div class="flex items-center space-x-3 sm:space-x-4">
+                <div class="relative">
+                  {% if officer.profile_picture %}
+                    <img src="{{ officer.profile_picture.url }}" alt="{{ officer.user.get_full_name }}"
+                      class="w-8 h-8 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-blue-200">
+                  {% else %}
+                    <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center border-2 border-blue-200">
+                      <i class="fas fa-user text-white text-xs sm:text-lg"></i>
+                    </div>
+                  {% endif %}
+                  {% if officer.on_duty %}
+                  <div class="absolute -bottom-1 -right-1 w-2 h-2 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                  {% endif %}
+                </div>
+                <div>
+                  <div class="font-semibold text-gray-800 text-sm sm:text-base">{{ officer.user.get_full_name|truncatechars:20 }}</div>
+                  <div class="text-xs text-gray-500">ID: {{ officer.id }}</div>
+                </div>
+              </div>
+            </td>
+
+            <td class="px-4 sm:px-6 py-3 sm:py-4">
+              <div class="space-y-1">
+                <div class="flex items-center text-xs sm:text-sm text-gray-600">
+                  <i class="fas fa-envelope mr-1 sm:mr-2 text-blue-500 w-3 sm:w-4"></i>
+                  {{ officer.user.email|truncatechars:15|default:"N/A" }}
+                </div>
+                <div class="flex items-center text-xs sm:text-sm text-gray-600">
+                  <i class="fas fa-phone mr-1 sm:mr-2 text-green-500 w-3 sm:w-4"></i>
+                  {{ officer.user.phone|default:"N/A" }}
+                </div>
+              </div>
+            </td>
+
+            <td class="px-4 sm:px-6 py-3 sm:py-4">
+              <div class="space-y-1 sm:space-y-2">
+                <span class="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                  <i class="fas fa-star mr-1 text-yellow-500"></i>
+                  {{ officer.rank }}
+                </span>
+                <div class="text-xs sm:text-sm text-gray-600 font-mono">
+                  <i class="fas fa-id-card mr-1 text-gray-400"></i>
+                  {{ officer.badge_number }}
+                </div>
+              </div>
+            </td>
+
+            <td class="px-4 sm:px-6 py-3 sm:py-4">
+              <div class="flex items-center space-x-2">
+                <div class="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full"></div>
+                <span class="text-xs sm:text-sm font-medium text-gray-700">{{ officer.department.name|truncatechars:15 }}</span>
+              </div>
+            </td>
+
+            <td class="px-4 sm:px-6 py-3 sm:py-4 text-center">
+              {% if officer.on_duty %}
+              <span class="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                <i class="fas fa-check-circle mr-1"></i>
+                Active
+              </span>
+              {% else %}
+              <span class="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                <i class="fas fa-clock mr-1"></i>
+                Off Duty
+              </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center">
+              <div class="text-gray-400">
+                <i class="fas fa-users text-4xl mb-3"></i>
+                <p class="text-lg font-semibold">No Officers Found</p>
+                <p class="text-sm mt-1">Add your first police officer</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Modal functionality
+  const toggleBtn = document.getElementById("toggleFormBtn");
+  const formDiv = document.getElementById("officerForm");
+  const closeFormBtn = document.getElementById("closeFormBtn");
+  const cancelFormBtn = document.getElementById("cancelFormBtn");
+
+  // Open modal
+  toggleBtn.addEventListener("click", () => {
+    formDiv.classList.remove("hidden");
+    document.body.style.overflow = 'hidden';
+  });
+
+  // Close modal functions
+  function closeModal() {
+    formDiv.classList.add("hidden");
+    document.body.style.overflow = 'auto';
+  }
+
+  closeFormBtn.addEventListener("click", closeModal);
+  cancelFormBtn.addEventListener("click", closeModal);
+
+  // Close modal when clicking outside
+  window.addEventListener("click", (e) => {
+    if (e.target === formDiv) {
+      closeModal();
+    }
+  });
+
+  // Close modal with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !formDiv.classList.contains('hidden')) {
+      closeModal();
+    }
+  });
+</script>
+
+<style>
+  /* Custom form styling */
+  .form-group {
+    margin-bottom: 0;
+  }
+  
+  /* Smooth transitions */
+  .transition {
+    transition: all 0.3s ease;
+  }
+  
+  /* Custom scrollbar for modal */
+  #officerForm ::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  #officerForm ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  #officerForm ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+  }
+</style>
+
+{% endblock %}

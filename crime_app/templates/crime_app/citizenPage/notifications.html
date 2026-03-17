@@ -1,0 +1,197 @@
+<!-- crime_app/citizenPage/notifications.html -->
+{% extends "crime_app/citizenPage/maain.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Notifications</h1>
+        {% if unread_count > 0 %}
+        <button id="markAllRead" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm">
+            Mark All as Read
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Notifications List -->
+    <div class="bg-white rounded-lg shadow-md">
+        {% if notifications %}
+            <div class="divide-y divide-gray-200">
+                {% for notification in notifications %}
+                <div class="p-6 hover:bg-gray-50 transition {% if not notification.is_read %}bg-blue-50 border-l-4 border-blue-500{% endif %}" 
+                     data-notification-id="{{ notification.id }}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if notification.notification_type == 'status_update' %}bg-green-100 text-green-800
+                                    {% elif notification.notification_type == 'reminder' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                    {{ notification.get_notification_type_display }}
+                                </span>
+                                {% if not notification.is_read %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    New
+                                </span>
+                                {% endif %}
+                                <span class="text-xs text-gray-500">{{ notification.created_at|timesince }} ago</span>
+                            </div>
+                            <h3 class="font-semibold text-gray-800">{{ notification.title }}</h3>
+                            <p class="text-gray-600 mt-1">{{ notification.message }}</p>
+                            {% if notification.related_report %}
+                            <a href="{% url 'c-report-detail' notification.related_report.id %}" 
+                               class="inline-block mt-2 text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                View Report <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% if not notification.is_read %}
+                        <button class="mark-as-read ml-4 p-2 text-gray-400 hover:text-green-600 transition" 
+                                data-notification-id="{{ notification.id }}"
+                                title="Mark as read">
+                            <i class="fas fa-check-circle text-xl"></i>
+                        </button>
+                        {% else %}
+                        <div class="ml-4 p-2 text-green-500">
+                            <i class="fas fa-check-circle text-xl"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-bell-slash text-gray-300 text-4xl mb-4"></i>
+                <p class="text-gray-500 text-lg">No notifications yet</p>
+                <p class="text-gray-400 text-sm mt-1">You'll be notified when there are updates to your reports</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Function to mark notification as read
+    function markNotificationAsRead(notificationId, element) {
+        fetch(`/mark-notification-read/${notificationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Update the UI
+                element.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-500');
+                
+                // Remove the mark-as-read button
+                const button = element.querySelector('.mark-as-read');
+                if (button) {
+                    button.remove();
+                }
+                
+                // Remove "New" badge
+                const newBadge = element.querySelector('.bg-red-100');
+                if (newBadge) {
+                    newBadge.remove();
+                }
+                
+                // Add checked icon
+                const buttonContainer = element.querySelector('.ml-4');
+                if (buttonContainer) {
+                    buttonContainer.innerHTML = '<div class="p-2 text-green-500"><i class="fas fa-check-circle text-xl"></i></div>';
+                }
+                
+                // Update the unread count in the header if it exists
+                const markAllButton = document.getElementById('markAllRead');
+                if (markAllButton) {
+                    // You could update a counter here if you have one
+                    // For now, just check if all are read and hide the button
+                    const remainingUnread = document.querySelectorAll('.mark-as-read').length;
+                    if (remainingUnread === 0) {
+                        markAllButton.remove();
+                    }
+                }
+                
+                console.log('Notification marked as read:', notificationId);
+            } else {
+                console.error('Failed to mark notification as read:', data.message);
+                alert('Failed to mark notification as read. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error marking notification as read:', error);
+            alert('Error marking notification as read. Please try again.');
+        });
+    }
+
+    // Add event listeners when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mark single notification as read
+        document.querySelectorAll('.mark-as-read').forEach(button => {
+            button.addEventListener('click', function(event) {
+                event.stopPropagation();
+                const notificationId = this.getAttribute('data-notification-id');
+                const notificationElement = this.closest('.p-6');
+                markNotificationAsRead(notificationId, notificationElement);
+            });
+        });
+
+        // Mark all as read
+        const markAllButton = document.getElementById('markAllRead');
+        if (markAllButton) {
+            markAllButton.addEventListener('click', function() {
+                fetch("{% url 'mark_all_notifications_read' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Reload the page to reflect changes
+                        location.reload();
+                    } else {
+                        alert('Failed to mark all notifications as read. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking all notifications as read:', error);
+                    alert('Error marking all notifications as read. Please try again.');
+                });
+            });
+        }
+
+        // Optional: Auto-mark as read when user clicks on the notification content
+        document.querySelectorAll('.p-6').forEach(notification => {
+            notification.addEventListener('click', function(event) {
+                // Don't trigger if user clicked on a link or the mark-as-read button
+                if (event.target.tagName === 'A' || event.target.closest('.mark-as-read')) {
+                    return;
+                }
+                
+                const notificationId = this.getAttribute('data-notification-id');
+                const markButton = this.querySelector('.mark-as-read');
+                
+                if (markButton) {
+                    markNotificationAsRead(notificationId, this);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,225 @@
+{% load static %}
+{% load crispy_forms_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | QuickReport Nigeria</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="relative font-sans bg-gray-100">
+
+  <!-- Background Image -->
+  <div class="absolute inset-0">
+    <img src="{% static 'images/police.jpg' %}" alt="Police Background"
+         class="w-full h-full object-cover opacity-70">
+    <div class="absolute inset-0 bg-blue-900/80"></div>
+  </div>
+
+  <!-- Register Container -->
+  <div class="relative z-10 flex justify-center items-center min-h-screen px-4 py-8">
+    <div class="bg-white/95 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-full max-w-2xl text-center border-t-4 border-yellow-400">
+      
+      <!-- Header -->
+      <div class="flex justify-center mb-4">
+        <div class="bg-blue-900 p-3 rounded-full">
+          <i class="fas fa-user-plus text-yellow-400 text-2xl"></i>
+        </div>
+      </div>
+      <h1 class="text-3xl font-bold text-blue-900 mb-1">QuickReport Nigeria</h1>
+      <p class="text-sm text-gray-500 mb-2">Nigeria Police Force</p>
+      <h2 class="text-xl font-semibold text-yellow-500 mb-6">Create Account</h2>
+
+      <!-- Form -->
+      <form method="POST" class="text-left">
+        {% csrf_token %}
+        
+        <!-- Display form errors -->
+        {% if form.errors %}
+          <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+            <strong>Please correct the errors below:</strong>
+            <ul class="mt-1 list-disc list-inside">
+              {% for field in form %}
+                {% for error in field.errors %}
+                  <li>{{ field.label }}: {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <!-- Form Fields with custom styling -->
+        <div class="space-y-4">
+          <!-- First Name & Last Name in one row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+              <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+              <input type="text" name="first_name" id="{{ form.first_name.id_for_label }}" 
+                     value="{{ form.first_name.value|default:'' }}"
+                     class="form-control {% if form.first_name.errors %}error{% endif %}"
+                     placeholder="Enter your first name">
+              {% if form.first_name.errors %}
+                <div class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+              <input type="text" name="last_name" id="{{ form.last_name.id_for_label }}" 
+                     value="{{ form.last_name.value|default:'' }}"
+                     class="form-control {% if form.last_name.errors %}error{% endif %}"
+                     placeholder="Enter your last name">
+              {% if form.last_name.errors %}
+                <div class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Email & Phone in one row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+              <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+              <input type="email" name="email" id="{{ form.email.id_for_label }}" 
+                     value="{{ form.email.value|default:'' }}"
+                     class="form-control {% if form.email.errors %}error{% endif %}"
+                     placeholder="Enter your email">
+              {% if form.email.errors %}
+                <div class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+              <input type="tel" name="phone" id="{{ form.phone.id_for_label }}" 
+                     value="{{ form.phone.value|default:'' }}"
+                     class="form-control {% if form.phone.errors %}error{% endif %}"
+                     placeholder="Enter your phone number">
+              {% if form.phone.errors %}
+                <div class="text-red-600 text-sm mt-1">{{ form.phone.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Address (full width) -->
+          <div class="form-group">
+            <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            <textarea name="address" id="{{ form.address.id_for_label }}" 
+                      class="form-control {% if form.address.errors %}error{% endif %}"
+                      placeholder="Enter your address (optional)">{{ form.address.value|default:'' }}</textarea>
+            {% if form.address.errors %}
+              <div class="text-red-600 text-sm mt-1">{{ form.address.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Password fields in one row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+              <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+              <input type="password" name="password1" id="{{ form.password1.id_for_label }}" 
+                     class="form-control {% if form.password1.errors %}error{% endif %}"
+                     placeholder="Create a password">
+              {% if form.password1.errors %}
+                <div class="text-red-600 text-sm mt-1">{{ form.password1.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+              <input type="password" name="password2" id="{{ form.password2.id_for_label }}" 
+                     class="form-control {% if form.password2.errors %}error{% endif %}"
+                     placeholder="Confirm your password">
+              {% if form.password2.errors %}
+                <div class="text-red-600 text-sm mt-1">{{ form.password2.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Terms Agreement -->
+        <div class="mt-6 flex items-start">
+          <input type="checkbox" id="terms" name="terms" required 
+                 class="mt-1 mr-2 rounded text-yellow-400 focus:ring-yellow-400">
+          <label for="terms" class="text-sm text-gray-600">
+            I agree to the <a href="#" class="text-yellow-400 hover:underline">Terms of Service</a> and 
+            <a href="#" class="text-yellow-400 hover:underline">Privacy Policy</a>
+          </label>
+        </div>
+
+        <button type="submit"
+                class="w-full bg-yellow-400 text-blue-900 font-bold py-3 rounded-lg hover:bg-yellow-300 transition mt-6 flex items-center justify-center space-x-2">
+          <i class="fas fa-user-plus"></i>
+          <span>Create Account</span>
+        </button>
+      </form>
+
+      <!-- Links -->
+      <div class="mt-6 text-sm text-gray-600">
+        <p>Already have an account? 
+          <a href="{% url 'my-login' %}" class="text-yellow-400 hover:underline font-semibold">Login here</a>
+        </p>
+        <p class="mt-2">
+          <a href="{% url '' %}" class="text-blue-900 hover:underline">
+            <i class="fas fa-arrow-left mr-1"></i>Back to Home
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="absolute bottom-0 w-full text-center text-gray-300 text-xs py-3 bg-blue-900/70 backdrop-blur-md">
+    &copy; 2025 QuickReport Nigeria. All Rights Reserved.
+  </footer>
+
+  <style>
+    /* Custom styling for form controls */
+    .form-control {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+    
+    /* Error state styling */
+    .form-control.error {
+      border-color: #dc2626;
+      background-color: #fef2f2;
+    }
+    
+    .form-control.error:focus {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    }
+    
+    textarea.form-control {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    /* Form group spacing */
+    .form-group {
+      margin-bottom: 0;
+    }
+    
+    /* Error message styling */
+    .text-red-600 {
+      color: #dc2626;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+    
+    /* REMOVED the problematic :invalid rule */
+  </style>
+</body>
+</html>
