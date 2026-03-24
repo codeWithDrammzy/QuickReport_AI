@@ -200,8 +200,13 @@ def officer_list(request):
         form = OfficerForm()
 
     officers = Officer.objects.all()
-    return render(request, 'crime_app/adminPage/officer-list.html', {'form': form, 'officers': officers})
-
+    departments = Department.objects.all()  # ADD THIS LINE
+    
+    return render(request, 'crime_app/adminPage/officer-list.html', {
+        'form': form, 
+        'officers': officers,
+        'departments': departments  # ADD THIS LINE
+    })
 
 def department_list(request):
     """Admin view for managing departments"""

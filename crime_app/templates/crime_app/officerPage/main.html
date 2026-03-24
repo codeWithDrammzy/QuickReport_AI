@@ -338,7 +338,7 @@
       }
     });
 
-    // Notifications Dropdown Toggle
+    // Notifications Dropdown Toggle - FIXED URL
     notifyBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
       notifyMenu.classList.toggle('hidden');
@@ -351,7 +351,7 @@
 
       // Mark all as read when opened
       if (badge && badge.style.display !== 'none') {
-        fetch("{% url 'mark-notifications-read' %}", {
+        fetch("{% url 'mark_all_notifications_read' %}", {
           method: 'POST',
           headers: {
             'X-CSRFToken': '{{ csrf_token }}',
@@ -377,12 +377,12 @@
       }
     });
 
-    // Mark All as Read Button
+    // Mark All as Read Button - FIXED URL
     markAllBtn?.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       
-      fetch("{% url 'mark-notifications-read' %}", {
+      fetch("{% url 'mark_all_notifications_read' %}", {
         method: 'POST',
         headers: {
           'X-CSRFToken': '{{ csrf_token }}',
